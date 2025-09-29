@@ -1,9 +1,4 @@
 #' Create a todoengine project layout in a Git repo.
-#'
-#' @param repo_dir path to your cloned GitHub repo (e.g., "~/Projects/To_Do")
-#' @param syncthing_live_dir optional path to a Syncthing folder to use as live_dir
-#' @param overwrite whether to overwrite existing config / initial week files
-#' @export
 instantiate_todo <- function(repo_dir,
                              syncthing_live_dir = NULL,
                              overwrite = FALSE) {
@@ -28,22 +23,20 @@ instantiate_todo <- function(repo_dir,
   
   cfg_lines <- c(
     "## Local configuration for todoengine",
-    "## You can edit these paths and flags as needed.",
-    "todo_config_local <- function() {",
-    "  list(",
-    "    tz = 'America/Chicago',",
-    "    indent = 2L,",
-    paste0("    live_dir = '", live_dir, "',"),
-    paste0("    archive_dir = '", archive_dir, "',"),
-    "    filename_fmt = 'ToDo_%y%m%d_%s.txt',",
-    "    daily_sections = c('Monday','Tuesday','Wednesday','Thursday','Friday'),",
-    "    render_markdown = TRUE,",
-    "    render_html = TRUE",
-    "  )",
-    "}"
+    "# ~/To_Do/todoengine_config.R",
+    "todo_config_local <- list(",
+    "  tz = 'America/Chicago',",
+    "  indent = 2L,",
+    paste0("  live_dir    = '", live_dir, "',"),
+    paste0("  archive_dir = '", archive_dir, "',"),
+    "  filename_fmt = 'ToDo_%y%m%d_%s.txt',",
+    "  daily_sections = c('Monday','Tuesday','Wednesday','Thursday','Friday'),",
+    "  render_markdown = TRUE,",
+    "  render_html = TRUE",
+    ")"
   )
   writeLines(cfg_lines, cfg_path)
-  
+
   # 2) seed initial week in live_dir (based on current Monday)
   mon <- .monday_of(Sys.Date())
   files <- .build_names_for(mon)

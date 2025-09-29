@@ -1,6 +1,7 @@
 # R/parse.R
 # returns a data.frame: id, parent_id, period, section, name, recur, status, level, order, path
-parse_todo <- function(file, period = NA_character_, indent = todo_config()$indent) {
+parse_todo <- function(file, period = NA_character_, indent = NULL) {
+  if (is.null(indent)) indent <- todo_config()$indent
   if (!file.exists(file)) stop("Missing file: ", file)
   lines <- readLines(file, warn = FALSE)
   out <- vector("list", length(lines))
