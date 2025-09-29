@@ -64,7 +64,7 @@ inherit_recur_to_parents <- function(df){
   for (lvl in levs) {
     parents <- unique(df$parent_id[df$level == lvl & !is.na(df$parent_id)])
     for (p in parents) {
-      if (any(df$recur[df$parent_id == p])) df$recur[df$id == p] <- TRUE
+      if (any(df$recur[df$parent_id == p], na.rm = TRUE)) df$recur[df$id == p] <- TRUE
     }
   }
   df
