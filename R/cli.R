@@ -62,13 +62,13 @@ infer_period_from_filename <- function(f){
 }
 
 #' Roll up parent statuses in a single file
-fix_parents <- function(file){
-  per <- infer_period_from_filename(file)
-  df  <- parse_todo(file, per)
+fix_parents <- function(file_name){
+  per <- infer_period_from_filename(file_name)
+  df  <- parse_todo(file_name, per)
   df  <- inherit_recur_to_parents(df)
   df  <- rollup_status(df)
-  write_todo_txt(df, file, ifelse(is.na(per), "Daily", per))
-  invisible(file)
+  write_todo_txt(df, file_name, ifelse(is.na(per), "Daily", per))
+  invisible(file_name)
 }
 
 # R/cli.R
