@@ -10,6 +10,7 @@
   paste0("ToDo_", ds, "_", .period_types, ".txt")
 }
 
+#' @export
 paths_for <- function(date = Sys.Date(), cfg = todo_config()) {
   files <- .build_names_for(.monday_of(date))
   live  <- file.path(cfg$live_dir,  files)

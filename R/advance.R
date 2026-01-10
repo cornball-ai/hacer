@@ -21,6 +21,7 @@
   df
 }
 
+#' @export
 advance_period <- function(daily, week, month, quarter, prev_monday, next_monday) {
   # 1) propagate from daily
   week    <- propagate_from_daily(daily, week)
@@ -57,6 +58,7 @@ advance_period <- function(daily, week, month, quarter, prev_monday, next_monday
   list(Daily = next_daily, Week = next_week, Month = month, Quarter = quarter)
 }
 
+#' @export
 inherit_recur_to_parents <- function(df){
   if (!nrow(df)) return(df)
   df$recur <- as.logical(df$recur)

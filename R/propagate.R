@@ -8,6 +8,7 @@
   out
 }
 
+#' @export
 propagate_from_daily <- function(daily, target) {
   if (!nrow(daily) || !nrow(target)) return(target)
   m <- match(target$path, daily$path)

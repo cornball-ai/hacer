@@ -1,6 +1,8 @@
+#' @importFrom yaml read_yaml
+#' @export
 todo_config <- function(repo_dir = getOption("todoengine.repo", getwd())) {
   repo_dir <- path.expand(repo_dir)
-  cfg_path <- file.path(repo_dir, "todoengine_config.yaml")
+  cfg_path <- file.path(repo_dir, "config.yaml")
   
   if (file.exists(cfg_path)) {
     return(yaml::read_yaml(cfg_path))

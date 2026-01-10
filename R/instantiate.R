@@ -1,4 +1,5 @@
 #' Create a todoengine project layout in a Git repo.
+#' @export
 instantiate_todo <- function(repo_dir,
                              syncthing_live_dir = NULL,
                              overwrite = FALSE) {

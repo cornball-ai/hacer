@@ -1,5 +1,6 @@
 # R/cli.R
 #' Generate the new week's files (run on Mondays)
+#' @export
 run_monday <- function(date = Sys.Date(), cfg = todo_config()) {
   dir.create(cfg$live_dir, recursive = TRUE, showWarnings = FALSE)
   dir.create(cfg$archive_dir, recursive = TRUE, showWarnings = FALSE)
@@ -55,6 +56,7 @@ run_monday <- function(date = Sys.Date(), cfg = todo_config()) {
   invisible(dst$live)
 }
 
+#' @export
 infer_period_from_filename <- function(f){
   b <- basename(f)
   if (grepl("_Daily", b)) "Daily" else if (grepl("_Week", b)) "Week" else
@@ -62,6 +64,7 @@ infer_period_from_filename <- function(f){
 }
 
 #' Roll up parent statuses in a single file
+#' @export
 fix_parents <- function(file_name){
   per <- infer_period_from_filename(file_name)
   df  <- parse_todo(file_name, per)
