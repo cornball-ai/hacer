@@ -21,6 +21,12 @@
   df
 }
 
+.reset_all_status <- function(df) {
+  if (!nrow(df)) return(df)
+  df$status <- " "
+  df
+}
+
 #' @export
 advance_period <- function(daily, week, month, quarter, prev_monday, next_monday) {
   # 1) propagate from daily
@@ -40,21 +46,18 @@ advance_period <- function(daily, week, month, quarter, prev_monday, next_monday
   month   <- rollup_status(month)
   quarter <- rollup_status(quarter)
   
-  # 3) next Daily/Week: drop x (non-recur), keep /, keep *
-  next_daily <- .reset_recurs_if_done(.drop_done_nonrecur(daily))
-  next_week  <- .reset_recurs_if_done(.drop_done_nonrecur(week))
+  # 3) next Daily/Week: drop x (non-recur), reset all status to blank
+  next_daily <- .reset_all_status(.drop_done_nonrecur(daily))
+  next_week  <- .reset_all_status(.drop_done_nonrecur(week))
   
-  # 4) month/quarter rollover clearing (remove x on turnover)
+  # 4) month/quarter rollover clearing (remove x on turnover, reset status)
   if (.is_new_month(prev_monday, next_monday)) {
-    month <- month[!(month$status == "x" & !month$recur), , drop = FALSE]
-    # also reset any recured x back to blank
-    month <- .reset_recurs_if_done(month)
+    month <- .reset_all_status(.drop_done_nonrecur(month))
   }
   if (.is_new_quarter(prev_monday, next_monday)) {
-    quarter <- quarter[!(quarter$status == "x" & !quarter$recur), , drop = FALSE]
-    quarter <- .reset_recurs_if_done(quarter)
+    quarter <- .reset_all_status(.drop_done_nonrecur(quarter))
   }
-  
+
   list(Daily = next_daily, Week = next_week, Month = month, Quarter = quarter)
 }
 
