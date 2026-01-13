@@ -127,3 +127,108 @@ sync_from_daily <- function(date = Sys.Date(), cfg = todo_config()){
   write_todo_txt(Q, p$live[grepl("_Quarter", p$live)], "Quarter", cfg)
   invisible(TRUE)
 }
+
+#' Advance tasks from today to tomorrow within the Daily file
+#'
+#' Copies tasks from today's section to tomorrow's section (except completed
+#' items and daily recurring like Email/ToDo if marked done). Then removes
+#' unchecked items from today, keeping only in-progress and completed tasks
+#' as a record of what was actually worked on.
+#'
+#' @export
+next_day <- function(date = Sys.Date(), cfg = todo_config()) {
+  p <- paths_for(date, cfg)
+  daily_file <- p$live[grepl("_Daily", p$live)]
+  if (!file.exists(daily_file)) stop("Daily file not found: ", daily_file)
+
+  lines <- readLines(daily_file, warn = FALSE)
+  days <- cfg$daily_sections  # e.g., c("Monday", "Tuesday", ...)
+
+  # Determine today's weekday name
+
+  today_name <- weekdays(date)
+  today_idx <- match(today_name, days)
+  if (is.na(today_idx)) stop("Today (", today_name, ") not in daily_sections")
+  if (today_idx >= length(days)) {
+    message("Already at ", today_name, " (last day). Nothing to advance.")
+    return(invisible(daily_file))
+  }
+  tomorrow_name <- days[today_idx + 1L]
+
+  # Find section boundaries
+  section_starts <- grep("^#\\s+\\w", lines)
+  section_names <- sub("^#\\s+", "", lines[section_starts])
+
+  today_start <- section_starts[match(today_name, section_names)]
+  tomorrow_start <- section_starts[match(tomorrow_name, section_names)]
+  if (is.na(today_start) || is.na(tomorrow_start)) {
+    stop("Could not find sections for ", today_name, " and ", tomorrow_name)
+  }
+
+  # Find end of today's section (line before tomorrow or next section)
+  today_end <- tomorrow_start - 1L
+  while (today_end > today_start && grepl("^\\s*$|^#", lines[today_end])) {
+    today_end <- today_end - 1L
+  }
+
+  # Extract today's task lines
+  if (today_end < today_start) {
+    message("No tasks in ", today_name, " section.")
+    return(invisible(daily_file))
+  }
+  today_lines <- lines[(today_start + 1L):today_end]
+
+  # Filter for copying to tomorrow:
+  # - Skip [x] completed items
+
+  # - Skip Email/ToDo if [/] (daily recurring that got done)
+  copy_lines <- character()
+  for (ln in today_lines) {
+    if (!grepl("^\\s*\\[", ln)) next  # not a task line
+    status <- substr(sub("^\\s*", "", ln), 2, 2)
+    if (status == "x") next  # skip completed
+
+    # Check if it's Email or ToDo with [/]
+    is_daily_recur <- grepl("-\\s*\\*?(Email|ToDo)\\s*$", ln, ignore.case = TRUE)
+    if (is_daily_recur && status == "/") next  # skip done daily recurring
+
+    # Reset status to blank for tomorrow
+    ln_reset <- sub("\\[/\\]", "[ ]", ln)
+    ln_reset <- sub("\\[x\\]", "[ ]", ln_reset)  # just in case
+    copy_lines <- c(copy_lines, ln_reset)
+  }
+
+  # Filter today's section: keep only [/] and [x], remove [ ]
+  keep_today <- character()
+  for (ln in today_lines) {
+    if (!grepl("^\\s*\\[", ln)) {
+      # Keep non-task lines (blanks, etc.)
+      keep_today <- c(keep_today, ln)
+    } else {
+      status <- substr(sub("^\\s*", "", ln), 2, 2)
+      if (status %in% c("/", "x")) {
+        keep_today <- c(keep_today, ln)
+      }
+      # Drop [ ] unchecked items
+    }
+  }
+
+  # Find where to insert in tomorrow's section
+  # Insert after the "# Tomorrow" header line
+  tomorrow_insert <- tomorrow_start
+
+  # Build new file
+  new_lines <- c(
+    lines[1:today_start],           # everything up to and including today header
+    keep_today,                      # filtered today tasks
+    "",                              # blank line
+    lines[tomorrow_start],           # tomorrow header
+    copy_lines,                      # copied tasks
+    if (tomorrow_start < length(lines)) lines[(tomorrow_start + 1L):length(lines)] else character()
+  )
+
+  # Remove excess blank lines
+  writeLines(new_lines, daily_file)
+  message("Advanced from ", today_name, " to ", tomorrow_name)
+  invisible(daily_file)
+}
