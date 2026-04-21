@@ -1,8 +1,25 @@
+# Resolves the ToDo repo path:
+#   arg > options("hacer.repo") > Sys.getenv("HACER_REPO") > getwd()
+.default_repo_dir <- function() {
+  opt <- getOption("hacer.repo", NULL)
+  if (!is.null(opt)) return(opt)
+  env <- Sys.getenv("HACER_REPO", unset = "")
+  if (nzchar(env)) env else getwd()
+}
+
 #' Load the ToDo repo configuration
+#'
+#' Resolution order for `repo_dir`:
+#' 1. The argument if supplied.
+#' 2. `options("hacer.repo")` (set by `use_repo()` within a session).
+#' 3. The `HACER_REPO` environment variable (for one-shot CLI invocations
+#'    like `HACER_REPO=~/To_Do r -e 'hacer::run_monday()'`).
+#' 4. The current working directory.
+#'
 #' @param repo_dir Path to your ToDo repo directory.
 #' @importFrom yaml read_yaml
 #' @export
-todo_config <- function(repo_dir = getOption("hacer.repo", getwd())) {
+todo_config <- function(repo_dir = .default_repo_dir()) {
   repo_dir <- path.expand(repo_dir)
   cfg_path <- file.path(repo_dir, "config.yaml")
   

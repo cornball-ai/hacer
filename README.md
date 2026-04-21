@@ -78,6 +78,20 @@ hacer::fix_parents(file_name = "~/To_Do/this_week/ToDo_250915_Daily.txt")
 
 > Tip: add `use_repo("~/To_Do")` to `~/.Rprofile` so you don't need to call it each session.
 
+## For LLM CLI agents
+
+hacer's functions work fine as one-shot R calls from any agent that can spawn `Rscript` or `r` (Claude Code, Codex, etc.). Point hacer at a repo with the `HACER_REPO` environment variable — no `use_repo()` required:
+
+```bash
+HACER_REPO=~/To_Do r -e 'hacer::run_monday()'
+HACER_REPO=~/To_Do r -e 'hacer::next_day()'
+HACER_REPO=~/To_Do r -e 'hacer::fix_parents("~/To_Do/this_week/ToDo_250915_Daily.txt")'
+```
+
+Resolution order for the repo path is: `repo_dir` argument → `options("hacer.repo")` → `HACER_REPO` env var → `getwd()`. The env var makes the "stateless one-shot" case ergonomic.
+
+If you're running [corteza](https://github.com/cornball-ai/corteza)'s MCP server, hacer's exports register automatically as `hacer::*` tools (on the corteza `hacer` branch) so any MCP-capable agent can call them.
+
 ## Weekly routine (Mon AM)
 
 1. Open `~/To_Do/this_week/ToDo_YYMMDD_Daily.txt` and plan the week/day.

@@ -3,11 +3,13 @@
 \alias{check_setup}
 \title{Quick check that repo is wired correctly}
 \usage{
-check_setup(repo_dir = getOption("hacer.repo", getwd()))
+check_setup(repo_dir = NULL)
 }
 \arguments{
-\item{repo_dir}{Path to your ToDo repo directory.}
+\item{repo_dir}{Path to your ToDo repo directory. If `NULL`, falls back
+through the standard resolution order.}
 }
 \description{
-Quick check that repo is wired correctly
+Uses the same `repo_dir` resolution as [todo_config()] (arg > option >
+`HACER_REPO` env var > working directory).
 }
