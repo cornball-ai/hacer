@@ -1,4 +1,7 @@
-#' Create a todoengine project layout in a Git repo.
+#' Create a hacer project layout in a Git repo.
+#' @param repo_dir Path to your ToDo repo directory.
+#' @param syncthing_live_dir Optional path to a Syncthing-shared live directory.
+#' @param overwrite Overwrite existing files? Default `FALSE`.
 #' @export
 instantiate_todo <- function(repo_dir,
                              syncthing_live_dir = NULL,
@@ -17,14 +20,14 @@ instantiate_todo <- function(repo_dir,
   dir.create(archive_dir, recursive = TRUE, showWarnings = FALSE)
   
   # 1) write local config file
-  cfg_path <- file.path(repo_dir, "todoengine_config.R")
+  cfg_path <- file.path(repo_dir, "hacer_config.R")
   if (file.exists(cfg_path) && !overwrite) {
     stop("Config already exists at ", cfg_path, ". Set overwrite=TRUE to replace.")
   }
   
   cfg_lines <- c(
-    "## Local configuration for todoengine",
-    "# ~/To_Do/todoengine_config.R",
+    "## Local configuration for hacer",
+    "# ~/To_Do/hacer_config.R",
     "todo_config_local <- list(",
     "  tz = 'America/Chicago',",
     "  indent = 2L,",
@@ -99,15 +102,15 @@ instantiate_todo <- function(repo_dir,
   }
   
   # 3) basic README to guide the user (optional)
-  readme_path <- file.path(repo_dir, "README_TODOENGINE.md")
+  readme_path <- file.path(repo_dir, "README_HACER.md")
   if (!file.exists(readme_path) || overwrite) {
     readme <- c(
-      "# To-Do Engine Project",
+      "# ToDo Project",
       "",
-      "- Edit `todoengine_config.R` to tweak paths and options.",
+      "- Edit `hacer_config.R` to tweak paths and options.",
       paste0("- Current week files live in: `", live_dir, "`"),
       paste0("- Archive lives in: `", archive_dir, "`"),
-      "- Run `todoengine::run_monday()` each Monday (or set a cron job).",
+      "- Run `hacer::run_monday()` each Monday (or set a cron job).",
       "- Edit `.txt` files directly in RStudio; Markdown/HTML mirrors are optional."
     )
     writeLines(readme, readme_path)
@@ -118,7 +121,7 @@ instantiate_todo <- function(repo_dir,
             "You can run `git init` there before committing archives.")
   }
   
-  message("Initialized todoengine project at: ", repo_dir,
+  message("Initialized hacer project at: ", repo_dir,
           "\n- Config: ", cfg_path,
           "\n- Live dir: ", live_dir,
           "\n- Archive dir: ", archive_dir,

@@ -1,4 +1,6 @@
 # R/rollup.R
+#' Roll child statuses up to parent tasks
+#' @param df A parsed ToDo data.frame.
 #' @export
 rollup_status <- function(df) {
   if (!nrow(df)) return(df)

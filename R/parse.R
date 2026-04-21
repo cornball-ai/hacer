@@ -1,5 +1,12 @@
 # R/parse.R
-# returns a data.frame: id, parent_id, period, section, name, recur, status, level, order, path
+#' Parse a ToDo `.txt` file into a data.frame
+#'
+#' Returns a data.frame with columns: id, parent_id, period, section, name,
+#' recur, status, level, order, path.
+#'
+#' @param file Path to a ToDo `.txt` file.
+#' @param period One of "Daily", "Week", "Month", "Quarter", or `NA`.
+#' @param indent Spaces per indent level. Defaults to `todo_config()$indent`.
 #' @export
 parse_todo <- function(file, period = NA_character_, indent = NULL) {
   if (is.null(indent)) indent <- todo_config()$indent

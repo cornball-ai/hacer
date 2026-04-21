@@ -1,5 +1,5 @@
 # ---- helpers ----
-library(todoengine)
+library(hacer)
 read_trim <- function(f) trimws(readLines(f, warn = FALSE), which = "right")
 status_of <- function(lines, task_label_regex) {
   # find first matching line like "[x] - House"
@@ -32,7 +32,7 @@ lines_case1 <- c(
 writeLines(lines_case1, f)
 
 # call your exported function (argument name = file_name)
-todoengine::fix_parents(file_name = f)
+hacer::fix_parents(file_name = f)
 
 out1 <- read_trim(f)
 stopifnot(identical(status_of(out1, "House"), "/"))
@@ -58,7 +58,7 @@ lines_case2 <- c(
 )
 writeLines(lines_case2, f)
 
-todoengine::fix_parents(file_name = f)
+hacer::fix_parents(file_name = f)
 
 out2 <- read_trim(f)
 stopifnot(identical(status_of(out2, "House"), "x"))

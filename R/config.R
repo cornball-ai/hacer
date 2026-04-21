@@ -1,6 +1,8 @@
+#' Load the ToDo repo configuration
+#' @param repo_dir Path to your ToDo repo directory.
 #' @importFrom yaml read_yaml
 #' @export
-todo_config <- function(repo_dir = getOption("todoengine.repo", getwd())) {
+todo_config <- function(repo_dir = getOption("hacer.repo", getwd())) {
   repo_dir <- path.expand(repo_dir)
   cfg_path <- file.path(repo_dir, "config.yaml")
   
@@ -22,9 +24,11 @@ todo_config <- function(repo_dir = getOption("todoengine.repo", getwd())) {
 }
 
 # Convenience: remember a repo path for this R session.
+#' Remember a repo path for this R session
+#' @param repo_dir Path to your ToDo repo directory.
 #' @export
 use_repo <- function(repo_dir) {
   repo_dir <- normalizePath(path.expand(repo_dir), mustWork = TRUE)
-  options(todoengine.repo = repo_dir)
+  options(hacer.repo = repo_dir)
   invisible(repo_dir)
 }
