@@ -30,7 +30,7 @@ lines_case1 <- c(
 )
 writeLines(lines_case1, f)
 
-todoengine::fix_parents(file_name = f)
+hacer::fix_parents(file_name = f)
 out1 <- readLines(f, warn = FALSE)
 
 expect_equal(status_of(out1, "House"), "/",
@@ -56,7 +56,7 @@ lines_case2 <- c(
 )
 writeLines(lines_case2, f)
 
-todoengine::fix_parents(file_name = f)
+hacer::fix_parents(file_name = f)
 out2 <- readLines(f, warn = FALSE)
 
 expect_equal(status_of(out2, "House"), "x",

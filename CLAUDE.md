@@ -4,19 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Package Overview
 
-`todoengine` is a base R package for managing plain-text nested to-do files with weekly rollover and archiving. Follows tinyverse philosophy (minimal dependencies).
+`hacer` is a base R package for managing plain-text nested ToDo files with weekly rollover and archiving. Part of the cerebro agent toolchain. Follows tinyverse philosophy (minimal dependencies).
 
 ## Development Commands
 
 ```bash
 # Document, install, and test
-r -e 'rhydrogen::document(); rhydrogen::install(); tinytest::test_package("todoengine")'
+r -e 'tinyrox::document(); tinypkgr::install(); tinytest::test_package("hacer")'
 
-# Check documentation validity
-r -e 'rhydrogen::check()'
-
-# Full R CMD check
-R CMD build . && R CMD check todoengine_*.tar.gz
+# Full check
+r -e 'tinypkgr::check()'
 ```
 
 ## Architecture
@@ -31,9 +28,9 @@ R CMD build . && R CMD check todoengine_*.tar.gz
 - `R/parse.R` - Text parsing to data.frame
 - `R/rollup.R` - Parent status calculation
 - `R/advance.R` - Period advancement logic (weekly/monthly/quarterly rollover)
-- `R/cli.R` - User-facing functions: `run_monday()`, `fix_parents()`, `sync_from_daily()`
+- `R/cli.R` - User-facing functions: `run_monday()`, `fix_parents()`, `sync_from_daily()`, `next_day()`
 - `R/io.R` - File I/O (txt, markdown, html output)
-- `R/config.R` - Configuration via `config.yaml` or `todoengine_config.R`
+- `R/config.R` - Configuration via `config.yaml` or `hacer_config.R`
 
 ## Task File Format
 

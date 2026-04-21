@@ -8,6 +8,9 @@
   out
 }
 
+#' Propagate status from Daily into a target period
+#' @param daily A parsed Daily data.frame.
+#' @param target A parsed target data.frame (Week, Month, or Quarter).
 #' @export
 propagate_from_daily <- function(daily, target) {
   if (!nrow(daily) || !nrow(target)) return(target)

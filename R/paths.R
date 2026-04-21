@@ -10,6 +10,9 @@
   paste0("ToDo_", ds, "_", .period_types, ".txt")
 }
 
+#' File paths for a given week's ToDo files
+#' @param date A Date. Defaults to `Sys.Date()`.
+#' @param cfg A config list from `todo_config()`.
 #' @export
 paths_for <- function(date = Sys.Date(), cfg = todo_config()) {
   files <- .build_names_for(.monday_of(date))

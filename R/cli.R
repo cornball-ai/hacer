@@ -1,5 +1,7 @@
 # R/cli.R
 #' Generate the new week's files (run on Mondays)
+#' @param date A Date. Defaults to `Sys.Date()`.
+#' @param cfg A config list from `todo_config()`.
 #' @export
 run_monday <- function(date = Sys.Date(), cfg = todo_config()) {
   dir.create(cfg$live_dir, recursive = TRUE, showWarnings = FALSE)
@@ -56,6 +58,8 @@ run_monday <- function(date = Sys.Date(), cfg = todo_config()) {
   invisible(dst$live)
 }
 
+#' Infer a period name from a ToDo filename
+#' @param f A filename or path like `ToDo_250915_Daily.txt`.
 #' @export
 infer_period_from_filename <- function(f){
   b <- basename(f)
@@ -64,6 +68,7 @@ infer_period_from_filename <- function(f){
 }
 
 #' Roll up parent statuses in a single file
+#' @param file_name Path to a ToDo `.txt` file.
 #' @export
 fix_parents <- function(file_name){
   per <- infer_period_from_filename(file_name)
@@ -76,6 +81,8 @@ fix_parents <- function(file_name){
 
 # R/cli.R
 #' Sync new items added in Daily up to Week/Month/Quarter
+#' @param date A Date. Defaults to `Sys.Date()`.
+#' @param cfg A config list from `todo_config()`.
 #' @export
 sync_from_daily <- function(date = Sys.Date(), cfg = todo_config()){
   p   <- paths_for(date, cfg)
@@ -135,6 +142,8 @@ sync_from_daily <- function(date = Sys.Date(), cfg = todo_config()){
 #' unchecked items from today, keeping only in-progress and completed tasks
 #' as a record of what was actually worked on.
 #'
+#' @param date A Date. Defaults to `Sys.Date()`.
+#' @param cfg A config list from `todo_config()`.
 #' @export
 next_day <- function(date = Sys.Date(), cfg = todo_config()) {
   p <- paths_for(date, cfg)
@@ -180,11 +189,19 @@ next_day <- function(date = Sys.Date(), cfg = todo_config()) {
 
   # Filter for copying to tomorrow:
   # - Skip [x] completed items
-
   # - Skip Email/ToDo if [/] (daily recurring that got done)
+  # - Keep blank lines between top-level tasks
   copy_lines <- character()
+  last_was_task <- FALSE
   for (ln in today_lines) {
+    # Keep blank lines (they separate top-level task groups)
+    if (grepl("^\\s*$", ln)) {
+      if (last_was_task) copy_lines <- c(copy_lines, "")
+      last_was_task <- FALSE
+      next
+    }
     if (!grepl("^\\s*\\[", ln)) next  # not a task line
+
     status <- substr(sub("^\\s*", "", ln), 2, 2)
     if (status == "x") next  # skip completed
 
@@ -196,6 +213,7 @@ next_day <- function(date = Sys.Date(), cfg = todo_config()) {
     ln_reset <- sub("\\[/\\]", "[ ]", ln)
     ln_reset <- sub("\\[x\\]", "[ ]", ln_reset)  # just in case
     copy_lines <- c(copy_lines, ln_reset)
+    last_was_task <- TRUE
   }
 
   # Filter today's section: keep only [/] and [x], remove [ ]
@@ -213,17 +231,22 @@ next_day <- function(date = Sys.Date(), cfg = todo_config()) {
     }
   }
 
-  # Find where to insert in tomorrow's section
-  # Insert after the "# Tomorrow" header line
-  tomorrow_insert <- tomorrow_start
+  # Find the separator line before tomorrow (e.g., #######################################)
+  separator_start <- tomorrow_start - 1L
+  while (separator_start > today_end && grepl("^\\s*$", lines[separator_start])) {
+    separator_start <- separator_start - 1L
+  }
+  # separator_start now points to the ### line (or today_end if none)
 
   # Build new file
   new_lines <- c(
-    lines[1:today_start],           # everything up to and including today header
-    keep_today,                      # filtered today tasks
-    "",                              # blank line
-    lines[tomorrow_start],           # tomorrow header
-    copy_lines,                      # copied tasks
+    lines[1:today_start],            # everything up to and including today header
+    keep_today,                       # filtered today tasks
+    "",                               # blank line
+    lines[separator_start:tomorrow_start],  # separator + blank + tomorrow header
+    "",                               # blank after header
+    copy_lines,                       # copied tasks
+    "",                               # blank line
     if (tomorrow_start < length(lines)) lines[(tomorrow_start + 1L):length(lines)] else character()
   )
 

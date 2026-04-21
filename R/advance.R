@@ -27,6 +27,13 @@
   df
 }
 
+#' Advance four parsed period tables across a week boundary
+#' @param daily A parsed Daily data.frame.
+#' @param week A parsed Week data.frame.
+#' @param month A parsed Month data.frame.
+#' @param quarter A parsed Quarter data.frame.
+#' @param prev_monday A Date: the Monday just ended.
+#' @param next_monday A Date: the new Monday being generated.
 #' @export
 advance_period <- function(daily, week, month, quarter, prev_monday, next_monday) {
   # 1) propagate from daily
@@ -61,6 +68,8 @@ advance_period <- function(daily, week, month, quarter, prev_monday, next_monday
   list(Daily = next_daily, Week = next_week, Month = month, Quarter = quarter)
 }
 
+#' Bubble `recur = TRUE` up to ancestor tasks
+#' @param df A parsed ToDo data.frame.
 #' @export
 inherit_recur_to_parents <- function(df){
   if (!nrow(df)) return(df)
