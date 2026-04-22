@@ -27,7 +27,7 @@ instantiate_todo <- function(repo_dir,
   
   cfg_lines <- c(
     "## Local configuration for hacer",
-    "# ~/To_Do/hacer_config.R",
+    paste0("# ", repo_dir, "/hacer_config.R"),
     "todo_config_local <- list(",
     "  tz = 'America/Chicago',",
     "  indent = 2L,",
