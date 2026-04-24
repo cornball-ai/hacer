@@ -92,6 +92,14 @@ Resolution order for the repo path is: `repo_dir` argument → `options("hacer.r
 
 If you're running [corteza](https://github.com/cornball-ai/corteza)'s MCP server, hacer's exports register automatically as `hacer::*` tools (on the corteza `hacer` branch) so any MCP-capable agent can call them.
 
+## Agent consumption (Cornelius)
+
+hacer's plain-text files are designed to be read by other agents. [Cornelius](https://github.com/cornball-ai/cornelius) (a personal briefing bot) parses your todo files every morning, matches project tokens against `saber::projects()` and a local alias list, pulls recent git commits for matched repos, and synthesizes a briefing via `llm.api`. The briefings land in Matrix/Element DM.
+
+Cornelius reads four cadences: **Daily** (today/yesterday), **Week**, **Month**, and **Quarter**. On Mondays it shifts to weekly review; Sundays it sends a week-ahead preview of Monday's section. First Monday of a month/quarter adds the Month/Quarter files to the briefing.
+
+To get your repos tracked: add them to your todo files (any cadence) and ensure the token resolves — either the repo basename matches, or add an alias in `cornelius/aliases.txt`.
+
 ## Weekly routine (Mon AM)
 
 1. Open `~/todo/this_week/ToDo_YYMMDD_Daily.txt` and plan the week/day.
