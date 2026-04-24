@@ -2,6 +2,9 @@
 .Rhistory
 .Rapp.history
 
+# corteza runtime state
+.corteza/
+
 # Session Data files
 .RData
 .RDataTmp

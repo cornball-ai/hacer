@@ -1,6 +1,6 @@
 # hacer
 
-Plain-text nested ToDo files: parse, roll up, and advance. Part of the [cerebro](https://github.com/cornball-ai/cerebro) agent toolchain.
+Plain-text nested ToDo files: parse, roll up, and advance.
 
 Edit in any text editor. Run a couple of small helpers. Keep history in git.
 
