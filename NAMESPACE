@@ -19,4 +19,6 @@ export(tasks)
 export(todo_config)
 export(use_repo)
 
+S3method(print,hacer_preview)
+
 importFrom(yaml,read_yaml)

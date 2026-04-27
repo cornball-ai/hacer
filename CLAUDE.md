@@ -42,6 +42,10 @@ r -e 'tinypkgr::check()'
 - Text files in `this_week/` remain the source of truth. `tasks()` is a read-through projection, not a cache.
 - Internal callers that need the full schema (sections, period, paths, ordering) should keep using `parse_todo()`.
 
+## Preview mode
+
+Every mutator (`roll_day`, `run_monday`, `fix_parents`, `next_day`, `sync_from_daily`, `instantiate_todo`) accepts `preview = TRUE` and returns a `hacer_preview` describing the would-be change without writing. Set `HACER_PREVIEW=1` to flip the default — useful for one-shot agent invocations that should be inspectable before they touch the user's todo repo. Internals live in `R/preview.R`; each mutator builds a `targets` list of `path -> new_lines` and dispatches via `.write_or_preview()`.
+
 ## Task File Format
 
 ```

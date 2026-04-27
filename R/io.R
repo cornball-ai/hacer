@@ -1,10 +1,8 @@
 # R/io.R
-write_todo_txt <- function(df, file, period, cfg = todo_config()) {
-  # rebuild nested text with sections and indent
+build_todo_txt_lines <- function(df, file, period, cfg = todo_config()) {
   lines <- character()
   lines <- c(lines, paste0("# ", basename(file)))
-  
-  # for Daily, keep day sections; otherwise ignore sections
+
   if (period == "Daily") {
     secs <- unique(df$section)
     secs <- secs[!is.na(secs)]
@@ -17,7 +15,11 @@ write_todo_txt <- function(df, file, period, cfg = todo_config()) {
     lines <- c(lines, "", "#######################################", "")
     lines <- c(lines, .df_to_lines(df, cfg$indent))
   }
-  writeLines(lines, file)
+  lines
+}
+
+write_todo_txt <- function(df, file, period, cfg = todo_config()) {
+  writeLines(build_todo_txt_lines(df, file, period, cfg), file)
 }
 
 .df_to_lines <- function(df, indent) {
@@ -36,10 +38,10 @@ write_todo_txt <- function(df, file, period, cfg = todo_config()) {
 }
 
 # optional mirrors:
-write_markdown <- function(df, file_md, period, cfg = todo_config()) {
+build_markdown_lines <- function(df, file_md, period, cfg = todo_config()) {
   lines <- character()
   lines <- c(lines, paste0("# ", sub("\\.md$", "", basename(file_md))))
-  
+
   one <- function(df) {
     if (!nrow(df)) return(character())
     df <- df[order(df$order), , drop=FALSE]
@@ -52,7 +54,7 @@ write_markdown <- function(df, file_md, period, cfg = todo_config()) {
     }
     out
   }
-  
+
   if (period == "Daily") {
     secs <- unique(df$section); secs <- secs[!is.na(secs)]
     for (s in secs) {
@@ -63,16 +65,19 @@ write_markdown <- function(df, file_md, period, cfg = todo_config()) {
     lines <- c(lines, "", "## Tasks", "")
     lines <- c(lines, one(df))
   }
-  writeLines(lines, file_md)
+  lines
 }
 
-write_simple_html <- function(df, file_html, period) {
-  # dead-simple static HTML: no deps
+write_markdown <- function(df, file_md, period, cfg = todo_config()) {
+  writeLines(build_markdown_lines(df, file_md, period, cfg), file_md)
+}
+
+build_simple_html_lines <- function(df, file_html, period) {
   esc <- function(x) { x <- gsub("&","&amp;",x, fixed=TRUE); x <- gsub("<","&lt;",x,fixed=TRUE); gsub(">","&gt;",x,fixed=TRUE) }
   lines <- c("<!doctype html>","<meta charset='utf-8'>",
              "<style>body{font-family:sans-serif;max-width:800px;margin:2rem auto} .lvl0{margin-left:0} .lvl1{margin-left:1.5rem} .lvl2{margin-left:3rem} .done{opacity:.7;text-decoration:line-through} .prog{font-weight:bold}</style>",
              paste0("<h1>", esc(period), "</h1>"))
-  
+
   to_ul <- function(df) {
     if (!nrow(df)) return(character())
     df <- df[order(df$order), , drop=FALSE]
@@ -86,7 +91,7 @@ write_simple_html <- function(df, file_html, period) {
     }
     out
   }
-  
+
   if (period == "Daily") {
     secs <- unique(df$section); secs <- secs[!is.na(secs)]
     for (s in secs) {
@@ -96,5 +101,9 @@ write_simple_html <- function(df, file_html, period) {
   } else {
     lines <- c(lines, to_ul(df))
   }
-  writeLines(lines, file_html)
+  lines
+}
+
+write_simple_html <- function(df, file_html, period) {
+  writeLines(build_simple_html_lines(df, file_html, period), file_html)
 }

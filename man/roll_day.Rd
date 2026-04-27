@@ -3,12 +3,16 @@
 \alias{roll_day}
 \title{Roll the most recent ToDo files forward to today}
 \usage{
-roll_day(date = Sys.Date(), cfg = todo_config())
+roll_day(date = Sys.Date(), cfg = todo_config(), preview = .preview_default())
 }
 \arguments{
 \item{date}{A Date. Defaults to \code{Sys.Date()}.}
 
 \item{cfg}{A config list from \code{todo_config()}.}
+
+\item{preview}{If \code{TRUE}, return a \code{hacer_preview} describing the
+change and write nothing. Defaults to \code{HACER_PREVIEW=1} env var or
+\code{FALSE}.}
 }
 \description{
 Finds the most recent file of each cadence in \code{this_week/}, copies it
