@@ -100,6 +100,30 @@ Resolution order for the repo path is: `repo_dir` argument → `options("hacer.r
 
 If you're running [corteza](https://github.com/cornball-ai/corteza)'s MCP server, hacer's exports register automatically as `hacer::*` tools (on the corteza `hacer` branch) so any MCP-capable agent can call them.
 
+### Look before you leap: preview mode
+
+Every function that writes to disk takes `preview = TRUE` and returns a `hacer_preview` object describing what would change without touching the filesystem:
+
+```r
+pv <- hacer::roll_day(preview = TRUE)
+print(pv)
+#> hacer preview
+#>   created (1):
+#>     + ~/todo/this_week/ToDo_250916_Daily.txt
+#>   done.log appends (2):
+#>     > 2025-09-16  [x] - Some finished task
+#>     > 2025-09-16    [x] - A nested done item
+```
+
+Set `HACER_PREVIEW=1` to flip the default for a one-shot CLI agent so it never accidentally writes:
+
+```bash
+HACER_REPO=~/todo HACER_PREVIEW=1 r -e 'hacer::run_monday()'
+HACER_REPO=~/todo HACER_PREVIEW=1 r -e 'hacer::roll_day()'
+```
+
+Covers `roll_day()`, `run_monday()`, `fix_parents()`, `next_day()`, `sync_from_daily()`, and `instantiate_todo()`. The preview lists `files_created`, `files_modified`, line-level diffs, and any `done.log` lines that would be appended.
+
 ### Reading: `tasks()` is the structured API
 
 `hacer::tasks()` is the read interface for agents. It returns the entire task set across `this_week/` as a `data.frame` so you can filter and reason without re-parsing text:
