@@ -8,15 +8,22 @@
 #'
 #' @param date A Date. Defaults to \code{Sys.Date()}.
 #' @param cfg A config list from \code{todo_config()}.
+#' @param preview If \code{TRUE}, return a \code{hacer_preview} describing the
+#'   change and write nothing. Defaults to \code{HACER_PREVIEW=1} env var or
+#'   \code{FALSE}.
 #' @export
-roll_day <- function(date = Sys.Date(), cfg = todo_config()) {
-  dir.create(cfg$live_dir, recursive = TRUE, showWarnings = FALSE)
+roll_day <- function(date = Sys.Date(), cfg = todo_config(),
+                     preview = .preview_default()) {
+  if (!preview) {
+    dir.create(cfg$live_dir, recursive = TRUE, showWarnings = FALSE)
+  }
 
   types <- c("Daily", "Week", "Month", "Quarter")
   live_files <- list.files(cfg$live_dir, pattern = "^ToDo_\\d{6}_.+\\.txt$")
 
   if (!length(live_files)) {
     message("No prior files found in ", cfg$live_dir, ". Nothing to roll.")
+    if (preview) return(.new_preview())
     return(invisible(character()))
   }
 
@@ -25,6 +32,7 @@ roll_day <- function(date = Sys.Date(), cfg = todo_config()) {
   valid <- vapply(m, length, integer(1L)) == 3L
   if (!any(valid)) {
     message("No valid ToDo files found in ", cfg$live_dir, ". Nothing to roll.")
+    if (preview) return(.new_preview())
     return(invisible(character()))
   }
 
@@ -33,8 +41,8 @@ roll_day <- function(date = Sys.Date(), cfg = todo_config()) {
   file_types <- vapply(m, `[`, character(1L), 3L)
 
   today_str <- format(date, "%y%m%d")
-  created <- character()
   done_log <- character()
+  targets <- list()
 
   repo_dir <- dirname(cfg$live_dir)
   done_log_path <- file.path(repo_dir, "done.log")
@@ -86,24 +94,19 @@ roll_day <- function(date = Sys.Date(), cfg = todo_config()) {
       out_lines <- c(out_lines, ln)
     }
 
-    writeLines(out_lines, dst_file)
-    created <- c(created, dst_file)
+    targets[[dst_file]] <- out_lines
   }
 
-  if (length(done_log)) {
-    if (file.exists(done_log_path)) {
-      cat(paste0(done_log, "\n"), file = done_log_path, append = TRUE)
+  result <- .write_or_preview(targets, preview, done_log_path, done_log)
+
+  if (!preview) {
+    if (length(targets)) {
+      message("Rolled to ", format(date), ": ",
+              paste(basename(names(targets)), collapse = ", "))
     } else {
-      writeLines(done_log, done_log_path)
+      message("Nothing to roll for ", format(date))
     }
+    return(invisible(names(targets)))
   }
-
-  if (length(created)) {
-    message("Rolled to ", format(date), ": ",
-            paste(basename(created), collapse = ", "))
-  } else {
-    message("Nothing to roll for ", format(date))
-  }
-
-  invisible(created)
+  result
 }
