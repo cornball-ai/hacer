@@ -25,12 +25,22 @@ r -e 'tinypkgr::check()'
 4. `write_todo_txt()` - Write data.frame back to .txt format
 
 **Key modules:**
-- `R/parse.R` - Text parsing to data.frame
+- `R/parse.R` - Text parsing to data.frame (internal/full schema)
+- `R/tasks.R` - Agent-facing read API (`tasks()`)
 - `R/rollup.R` - Parent status calculation
 - `R/advance.R` - Period advancement logic (weekly/monthly/quarterly rollover)
 - `R/cli.R` - User-facing functions: `run_monday()`, `fix_parents()`, `sync_from_daily()`, `next_day()`
+- `R/roll_day.R` - Day-to-day list rollover (`roll_day()`)
 - `R/io.R` - File I/O (txt, markdown, html output)
 - `R/config.R` - Configuration via `config.yaml` or `hacer_config.R`
+
+## Agent-facing read API
+
+`hacer::tasks()` is the primary read interface for agents. It returns a `data.frame` with columns `id`, `file`, `line`, `depth`, `status`, `recurring`, `text`, `parent_id`, with status normalized to `"todo"`, `"in_progress"`, `"done"`, `"blocked"`.
+
+- IDs are **ephemeral**: `<basename>:L<line>`. Stable across re-parses of an unchanged file, but they shift when lines move. Agents must not persist them across edits.
+- Text files in `this_week/` remain the source of truth. `tasks()` is a read-through projection, not a cache.
+- Internal callers that need the full schema (sections, period, paths, ordering) should keep using `parse_todo()`.
 
 ## Task File Format
 
