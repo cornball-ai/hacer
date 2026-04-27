@@ -7,23 +7,25 @@
 
 .build_names_for <- function(date) {
   ds <- format(date, "%y%m%d")
-  paste0("todo_", ds, "_", tolower(.period_types), ".txt")
+  paste0("todo_", ds, "_", tolower(.period_types), ".md")
 }
 
-# Resolve actual on-disk paths for a given Monday's period files. Falls back
-# to the legacy capitalized form if the lowercase form doesn't exist, so old
-# repos keep working. Returns the lowercase canonical path when nothing is
-# on disk yet (the path that would be written next).
+# Resolve actual on-disk paths for a given Monday's period files. Prefers the
+# canonical .md form, falls back to legacy lowercase .txt then capitalized
+# ToDo_*.txt — old repos keep working. Returns the .md canonical path when
+# nothing is on disk yet (the path that would be written next).
 .resolve_period_paths <- function(date, dir) {
   ds <- format(date, "%y%m%d")
   out <- character(length(.period_types))
   for (i in seq_along(.period_types)) {
     p <- .period_types[i]
-    lower <- file.path(dir, paste0("todo_", ds, "_", tolower(p), ".txt"))
-    upper <- file.path(dir, paste0("ToDo_", ds, "_", p, ".txt"))
-    out[i] <- if (file.exists(lower)) lower
-              else if (file.exists(upper)) upper
-              else lower
+    md      <- file.path(dir, paste0("todo_", ds, "_", tolower(p), ".md"))
+    txt_lo  <- file.path(dir, paste0("todo_", ds, "_", tolower(p), ".txt"))
+    txt_up  <- file.path(dir, paste0("ToDo_", ds, "_", p, ".txt"))
+    out[i] <- if (file.exists(md))     md
+              else if (file.exists(txt_lo)) txt_lo
+              else if (file.exists(txt_up)) txt_up
+              else md
   }
   out
 }

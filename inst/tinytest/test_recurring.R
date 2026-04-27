@@ -136,26 +136,26 @@ cfg <- list(
 )
 hacer::run_monday(date = as.Date("2025-09-22"), cfg = cfg)
 
-new_daily <- readLines(file.path(repo, "this_week", "todo_250922_daily.txt"),
+new_daily <- readLines(file.path(repo, "this_week", "todo_250922_daily.md"),
                        warn = FALSE)
 combined <- paste(new_daily, collapse = "\n")
 
 # Monday section has Email, todo, wiki, Exercise, cornball.ai > Lil Casey > Countdown
-mon_idx <- grep("^# Monday\\s*$", new_daily)
-fri_idx <- grep("^# Friday\\s*$", new_daily)
+mon_idx <- grep("^##\\s+Monday\\s*$", new_daily)
+fri_idx <- grep("^##\\s+Friday\\s*$", new_daily)
 mon_section <- paste(new_daily[mon_idx:(fri_idx - 1L)], collapse = "\n")
-expect_true(grepl("\\[ \\] -\\*Email", mon_section),
+expect_true(grepl("- \\[ \\] Email", mon_section),
             info = "Monday materializes Email")
-expect_true(grepl("\\[ \\] -\\*todo", mon_section),
+expect_true(grepl("- \\[ \\] todo", mon_section),
             info = "Monday materializes todo")
-expect_true(grepl("\\[ \\] -\\*wiki", mon_section),
+expect_true(grepl("- \\[ \\] wiki", mon_section),
             info = "Monday materializes wiki")
 expect_true(grepl("Countdown", mon_section),
             info = "Monday materializes nested Countdown")
 
 # Tuesday section: NOT Email/todo (M-only), NOT wiki (MR-only). Exercise + Countdown only.
-tue_idx <- grep("^# Tuesday\\s*$", new_daily)
-wed_idx <- grep("^# Wednesday\\s*$", new_daily)
+tue_idx <- grep("^##\\s+Tuesday\\s*$", new_daily)
+wed_idx <- grep("^##\\s+Wednesday\\s*$", new_daily)
 tue_section <- paste(new_daily[tue_idx:(wed_idx - 1L)], collapse = "\n")
 expect_false(grepl("Email", tue_section),
              info = "Tuesday omits Email (M-only)")

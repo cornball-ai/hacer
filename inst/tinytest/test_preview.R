@@ -22,9 +22,9 @@ cfg_for <- function(repo, indent = 2L) {
 # ---- Case 1: roll_day(preview=TRUE) writes nothing ----
 repo1 <- tmp_repo()
 cfg1 <- cfg_for(repo1)
-f1 <- file.path(cfg1$live_dir, "todo_250915_daily.txt")
+f1 <- file.path(cfg1$live_dir, "todo_250915_daily.md")
 writeLines(c(
-  "# todo_250915_daily.txt",
+  "# todo_250915_daily.md",
   "",
   "[ ] - Pending",
   "[x] - Done"
@@ -38,7 +38,7 @@ expect_inherits(pv1, "hacer_preview",
                 info = "preview=TRUE returns a hacer_preview")
 expect_identical(before_mtimes, after_mtimes,
                  info = "preview=TRUE leaves on-disk mtimes untouched")
-expect_false(file.exists(file.path(cfg1$live_dir, "todo_250916_daily.txt")),
+expect_false(file.exists(file.path(cfg1$live_dir, "todo_250916_daily.md")),
              info = "preview=TRUE does not create new files")
 expect_false(file.exists(file.path(repo1, "done.log")),
              info = "preview=TRUE does not create done.log")
@@ -46,7 +46,7 @@ expect_false(file.exists(file.path(repo1, "done.log")),
 # Preview reports the would-be changes
 expect_equal(length(pv1$files_created), 1L,
              info = "Preview lists one new file")
-expect_true(grepl("todo_250916_daily\\.txt$", pv1$files_created[1]),
+expect_true(grepl("todo_250916_daily\\.md$", pv1$files_created[1]),
             info = "Preview names the new daily file")
 expect_equal(length(pv1$done_log_appends), 1L,
              info = "Preview lists one done.log append")
@@ -58,9 +58,9 @@ unlink(repo1, recursive = TRUE)
 # ---- Case 2: roll_day preview + apply == roll_day non-preview ----
 make_repo <- function() {
   r <- tmp_repo()
-  f <- file.path(r, "this_week", "todo_250915_daily.txt")
+  f <- file.path(r, "this_week", "todo_250915_daily.md")
   writeLines(c(
-    "# todo_250915_daily.txt",
+    "# todo_250915_daily.md",
     "",
     "#######################################",
     "",
@@ -80,7 +80,7 @@ hacer::roll_day(date = as.Date("2025-09-16"),
                 cfg = cfg_for(repo_a),
                 preview = FALSE)
 state_a <- list(
-  daily = readLines(file.path(repo_a, "this_week", "todo_250916_daily.txt"),
+  daily = readLines(file.path(repo_a, "this_week", "todo_250916_daily.md"),
                     warn = FALSE),
   done  = readLines(file.path(repo_a, "done.log"), warn = FALSE)
 )
@@ -91,7 +91,7 @@ pv2 <- hacer::roll_day(date = as.Date("2025-09-16"),
                       preview = TRUE)
 hacer:::.apply_preview(pv2)
 state_b <- list(
-  daily = readLines(file.path(repo_b, "this_week", "todo_250916_daily.txt"),
+  daily = readLines(file.path(repo_b, "this_week", "todo_250916_daily.md"),
                     warn = FALSE),
   done  = readLines(file.path(repo_b, "done.log"), warn = FALSE)
 )
@@ -107,22 +107,22 @@ unlink(repo_b, recursive = TRUE)
 # ---- Case 3: HACER_PREVIEW env var flips the default ----
 repo3 <- tmp_repo()
 cfg3 <- cfg_for(repo3)
-f3 <- file.path(cfg3$live_dir, "todo_250915_daily.txt")
-writeLines(c("# todo_250915_daily.txt", "", "[ ] - Task"), f3)
+f3 <- file.path(cfg3$live_dir, "todo_250915_daily.md")
+writeLines(c("# todo_250915_daily.md", "", "[ ] - Task"), f3)
 
 old_env <- Sys.getenv("HACER_PREVIEW", unset = NA)
 Sys.setenv(HACER_PREVIEW = "1")
 pv3 <- hacer::roll_day(date = as.Date("2025-09-16"), cfg = cfg3)
 expect_inherits(pv3, "hacer_preview",
                 info = "HACER_PREVIEW=1 flips the default to preview mode")
-expect_false(file.exists(file.path(cfg3$live_dir, "todo_250916_daily.txt")),
+expect_false(file.exists(file.path(cfg3$live_dir, "todo_250916_daily.md")),
              info = "HACER_PREVIEW=1 still writes nothing")
 
 Sys.setenv(HACER_PREVIEW = "")
 out3 <- hacer::roll_day(date = as.Date("2025-09-16"), cfg = cfg3)
 expect_false(inherits(out3, "hacer_preview"),
              info = "Empty HACER_PREVIEW restores the write default")
-expect_true(file.exists(file.path(cfg3$live_dir, "todo_250916_daily.txt")),
+expect_true(file.exists(file.path(cfg3$live_dir, "todo_250916_daily.md")),
             info = "Empty HACER_PREVIEW writes as before")
 
 if (is.na(old_env)) Sys.unsetenv("HACER_PREVIEW") else Sys.setenv(HACER_PREVIEW = old_env)
@@ -131,8 +131,8 @@ unlink(repo3, recursive = TRUE)
 # ---- Case 4: print.hacer_preview renders a sensible summary ----
 repo4 <- tmp_repo()
 cfg4 <- cfg_for(repo4)
-f4 <- file.path(cfg4$live_dir, "todo_250915_daily.txt")
-writeLines(c("# todo_250915_daily.txt", "", "[ ] - Task", "[x] - Done"), f4)
+f4 <- file.path(cfg4$live_dir, "todo_250915_daily.md")
+writeLines(c("# todo_250915_daily.md", "", "[ ] - Task", "[x] - Done"), f4)
 
 pv4 <- hacer::roll_day(date = as.Date("2025-09-16"), cfg = cfg4, preview = TRUE)
 out4 <- capture.output(print(pv4))
@@ -148,9 +148,9 @@ unlink(repo4, recursive = TRUE)
 # ---- Case 5: fix_parents preview vs apply round trip ----
 make_fp_repo <- function() {
   r <- tmp_repo()
-  f <- file.path(r, "this_week", "todo_250915_daily.txt")
+  f <- file.path(r, "this_week", "todo_250915_daily.md")
   writeLines(c(
-    "# todo_250915_daily.txt",
+    "# todo_250915_daily.md",
     "",
     "#######################################",
     "",
@@ -233,9 +233,9 @@ make_sync_repo <- function() {
     ), f)
   }
   # Add a brand-new task only to Daily
-  daily <- file.path(r, "this_week", paste0("todo_", mon, "_daily.txt"))
+  daily <- file.path(r, "this_week", paste0("todo_", mon, "_daily.md"))
   writeLines(c(
-    paste0("# todo_", mon, "_daily.txt"),
+    paste0("# todo_", mon, "_daily.md"),
     "",
     "#######################################",
     "",

@@ -34,9 +34,8 @@ todo_config <- function(repo_dir = .default_repo_dir()) {
       indent = 2L,
       live_dir    = file.path(repo_dir, "this_week"),
       archive_dir = file.path(repo_dir, "archive"),
-      filename_fmt = "todo_%y%m%d_%s.txt",
+      filename_fmt = "todo_%y%m%d_%s.md",
       daily_sections = c("Monday","Tuesday","Wednesday","Thursday","Friday"),
-      render_markdown = TRUE,
       render_html = TRUE
     )
   }

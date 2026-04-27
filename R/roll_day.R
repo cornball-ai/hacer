@@ -20,7 +20,7 @@ roll_day <- function(date = Sys.Date(), cfg = todo_config(),
 
   types <- c("Daily", "Week", "Month", "Quarter")
   live_files <- list.files(cfg$live_dir,
-                           pattern = "^todo_\\d{6}_.+\\.txt$",
+                           pattern = "^todo_\\d{6}_.+\\.(md|txt)$",
                            ignore.case = TRUE)
 
   if (!length(live_files)) {
@@ -30,9 +30,9 @@ roll_day <- function(date = Sys.Date(), cfg = todo_config(),
   }
 
   m <- regmatches(live_files, regexec(
-    "^todo_(\\d{6})_(daily|week|month|quarter)\\.txt$",
+    "^todo_(\\d{6})_(daily|week|month|quarter)\\.(md|txt)$",
     live_files, ignore.case = TRUE))
-  valid <- vapply(m, length, integer(1L)) == 3L
+  valid <- vapply(m, length, integer(1L)) == 4L
   if (!any(valid)) {
     message("No valid ToDo files found in ", cfg$live_dir, ". Nothing to roll.")
     if (preview) return(.new_preview())
@@ -64,33 +64,33 @@ roll_day <- function(date = Sys.Date(), cfg = todo_config(),
     src_file <- file.path(
       cfg$live_dir,
       live_files[valid][idx][which.max(file_dates[idx])])
-    dst_name <- paste0("todo_", today_str, "_", tolower(tp), ".txt")
+    dst_name <- paste0("todo_", today_str, "_", tolower(tp), ".md")
     dst_file <- file.path(cfg$live_dir, dst_name)
 
     lines <- readLines(src_file, warn = FALSE)
     out_lines <- character()
 
     for (ln in lines) {
-      stripped <- sub("^\\s+", "", ln)
-      if (!grepl("^\\[( |/|x|!)\\]\\s*-", stripped)) {
+      parsed <- .parse_task_line(ln)
+      if (is.null(parsed)) {
         out_lines <- c(out_lines, ln)
         next
       }
 
-      status <- substr(stripped, 2L, 2L)
-      rest <- sub("^\\[( |/|x|!)\\]\\s*-\\s*", "", stripped)
-      recur <- grepl("^\\*", rest)
-
-      if (status == "x" && !recur) {
-        indent <- sub("^(\\s*).*", "\\1", ln)
-        task_text <- sub("^\\s*\\[( |/|x|!)\\]\\s*-\\s*", "", ln)
+      if (parsed$status == "x" && !parsed$recur) {
+        indent_lead <- sub("^(\\s*).*", "\\1", ln)
+        task_text <- if (grepl("^\\s*-\\s+\\[", ln)) {
+          sub("^\\s*-\\s+\\[( |/|x|!)\\]\\s+", "", ln)
+        } else {
+          sub("^\\s*\\[( |/|x|!)\\]\\s*-\\s*", "", ln)
+        }
         done_log <- c(
           done_log,
-          paste0(format(date, "%Y-%m-%d"), "  ", indent, task_text))
+          paste0(format(date, "%Y-%m-%d"), "  ", indent_lead, task_text))
         next
       }
 
-      if (status == "x" && recur) {
+      if (parsed$status == "x" && parsed$recur) {
         ln <- sub("[x]", "[ ]", ln, fixed = TRUE)
       }
 

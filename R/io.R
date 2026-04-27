@@ -7,12 +7,12 @@ build_todo_txt_lines <- function(df, file, period, cfg = todo_config()) {
     secs <- unique(df$section)
     secs <- secs[!is.na(secs)]
     for (s in secs) {
-      lines <- c(lines, "", "#######################################", paste0("\n# ", s), "")
+      lines <- c(lines, "", paste0("## ", s), "")
       part <- df[df$section == s, , drop=FALSE]
       lines <- c(lines, .df_to_lines(part, cfg$indent))
     }
   } else {
-    lines <- c(lines, "", "#######################################", "")
+    lines <- c(lines, "")
     lines <- c(lines, .df_to_lines(df, cfg$indent))
   }
   lines
@@ -29,48 +29,9 @@ write_todo_txt <- function(df, file, period, cfg = todo_config()) {
   for (i in seq_len(nrow(df))) {
     pad <- paste(rep(" ", df$level[i] * indent), collapse = "")
     stat <- paste0("[", df$status[i], "]")
-    if (isTRUE(df$recur[i])) {
-      out[i] <- paste0(pad, stat, " -*", df$name[i])
-    } else {
-      out[i] <- paste0(pad, stat, " - ", df$name[i])
-    }
+    out[i] <- paste0(pad, "- ", stat, " ", df$name[i])
   }
   out
-}
-
-# optional mirrors:
-build_markdown_lines <- function(df, file_md, period, cfg = todo_config()) {
-  lines <- character()
-  lines <- c(lines, paste0("# ", sub("\\.md$", "", basename(file_md))))
-
-  one <- function(df) {
-    if (!nrow(df)) return(character())
-    df <- df[order(df$order), , drop=FALSE]
-    out <- character(nrow(df))
-    for (i in seq_len(nrow(df))) {
-      pad <- paste(rep("  ", df$level[i]), collapse = "")
-      ck  <- if (df$status[i] == "x") "x" else if (df$status[i] == "/") "-" else " "
-      nm  <- if (df$recur[i]) paste0("*", df$name[i]) else df$name[i]
-      out[i] <- paste0(pad, "- [", ck, "] ", nm)
-    }
-    out
-  }
-
-  if (period == "Daily") {
-    secs <- unique(df$section); secs <- secs[!is.na(secs)]
-    for (s in secs) {
-      lines <- c(lines, "", paste0("## ", s), "")
-      lines <- c(lines, one(df[df$section == s, , drop=FALSE]))
-    }
-  } else {
-    lines <- c(lines, "", "## Tasks", "")
-    lines <- c(lines, one(df))
-  }
-  lines
-}
-
-write_markdown <- function(df, file_md, period, cfg = todo_config()) {
-  writeLines(build_markdown_lines(df, file_md, period, cfg), file_md)
 }
 
 build_simple_html_lines <- function(df, file_html, period) {

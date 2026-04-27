@@ -57,14 +57,10 @@ run_monday <- function(date = Sys.Date(), cfg = todo_config(),
   targets <- list()
   for (p in .period_types) {
     df <- nxt[[p]]
-    txt_path <- dst$live[.period_types == p]
-    targets[[txt_path]] <- build_todo_txt_lines(df, txt_path, p, cfg)
-    if (isTRUE(cfg$render_markdown)) {
-      md_path <- sub("\\.txt$", ".md", txt_path)
-      targets[[md_path]] <- build_markdown_lines(df, md_path, p, cfg)
-    }
+    md_path <- dst$live[.period_types == p]
+    targets[[md_path]] <- build_todo_txt_lines(df, md_path, p, cfg)
     if (isTRUE(cfg$render_html)) {
-      html_path <- sub("\\.txt$", ".html", txt_path)
+      html_path <- sub("\\.md$", ".html", md_path)
       targets[[html_path]] <- build_simple_html_lines(df, html_path, p)
     }
   }
@@ -248,13 +244,13 @@ next_day <- function(date = Sys.Date(), cfg = todo_config(),
       last_was_task <- FALSE
       next
     }
-    if (!grepl("^\\s*\\[", ln)) next
+    parsed <- .parse_task_line(ln)
+    if (is.null(parsed)) next
 
-    status <- substr(sub("^\\s*", "", ln), 2, 2)
-    if (status == "x") next
+    if (parsed$status == "x") next
 
-    is_daily_recur <- grepl("-\\s*\\*?(Email|ToDo)\\s*$", ln, ignore.case = TRUE)
-    if (is_daily_recur && status == "/") next
+    is_daily_recur <- grepl("^(Email|ToDo)$", parsed$name, ignore.case = TRUE)
+    if (is_daily_recur && parsed$status == "/") next
 
     ln_reset <- sub("\\[/\\]", "[ ]", ln)
     ln_reset <- sub("\\[x\\]", "[ ]", ln_reset)
@@ -264,13 +260,11 @@ next_day <- function(date = Sys.Date(), cfg = todo_config(),
 
   keep_today <- character()
   for (ln in today_lines) {
-    if (!grepl("^\\s*\\[", ln)) {
+    parsed <- .parse_task_line(ln)
+    if (is.null(parsed)) {
       keep_today <- c(keep_today, ln)
-    } else {
-      status <- substr(sub("^\\s*", "", ln), 2, 2)
-      if (status %in% c("/", "x", "!")) {
-        keep_today <- c(keep_today, ln)
-      }
+    } else if (parsed$status %in% c("/", "x", "!")) {
+      keep_today <- c(keep_today, ln)
     }
   }
 
