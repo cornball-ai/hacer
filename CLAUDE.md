@@ -54,8 +54,9 @@ r -e 'tinypkgr::check()'
 ```
 
 - Two spaces per indent level
-- Status: `[ ]` todo, `[/]` in progress, `[x]` done
+- Status: `[ ]` todo, `[/]` in progress, `[x]` done, `[!]` blocked
 - `*` prefix = recurring (preserved across rollovers)
+- `[!]` is sticky: rollup gives it precedence over all other statuses, and `roll_day()` / `run_monday()` / `next_day()` preserve it verbatim until a human or agent changes it
 
 ## Dependencies
 
