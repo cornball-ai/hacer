@@ -34,17 +34,17 @@ parse_todo <- function(file, period = NA_character_, indent = NULL) {
     }
     # task lines look like: "  [x] - *HAss"  or "  [ ] - Second Floor"
     stripped <- sub("^\\s+", "", ln)
-    if (!grepl("^\\[( |/|x)\\]\\s*-", stripped)) next
-    
+    if (!grepl("^\\[( |/|x|!)\\]\\s*-", stripped)) next
+
     # level by leading spaces
     nspaces <- nchar(ln) - nchar(stripped)
     level <- as.integer(nspaces / indent)
-    
+
     # status
-    status <- substr(stripped, 2L, 2L)   # " ", "/", or "x"
-    
+    status <- substr(stripped, 2L, 2L)   # " ", "/", "x", or "!"
+
     # after ] -, detect optional '*' tight or spaced
-    rest <- sub("^\\[( |/|x)\\]\\s*-\\s*", "", stripped)
+    rest <- sub("^\\[( |/|x|!)\\]\\s*-\\s*", "", stripped)
     recur <- FALSE
     if (grepl("^\\*", rest)) {
       recur <- TRUE
