@@ -20,7 +20,7 @@ roll_day <- function(date = Sys.Date(), cfg = todo_config(),
 
   types <- c("Daily", "Week", "Month", "Quarter")
   live_files <- list.files(cfg$live_dir,
-                           pattern = "^todo_\\d{6}_.+\\.txt$",
+                           pattern = "^todo_\\d{6}_.+\\.(md|txt)$",
                            ignore.case = TRUE)
 
   if (!length(live_files)) {
@@ -30,9 +30,9 @@ roll_day <- function(date = Sys.Date(), cfg = todo_config(),
   }
 
   m <- regmatches(live_files, regexec(
-    "^todo_(\\d{6})_(daily|week|month|quarter)\\.txt$",
+    "^todo_(\\d{6})_(daily|week|month|quarter)\\.(md|txt)$",
     live_files, ignore.case = TRUE))
-  valid <- vapply(m, length, integer(1L)) == 3L
+  valid <- vapply(m, length, integer(1L)) == 4L
   if (!any(valid)) {
     message("No valid ToDo files found in ", cfg$live_dir, ". Nothing to roll.")
     if (preview) return(.new_preview())
@@ -64,7 +64,7 @@ roll_day <- function(date = Sys.Date(), cfg = todo_config(),
     src_file <- file.path(
       cfg$live_dir,
       live_files[valid][idx][which.max(file_dates[idx])])
-    dst_name <- paste0("todo_", today_str, "_", tolower(tp), ".txt")
+    dst_name <- paste0("todo_", today_str, "_", tolower(tp), ".md")
     dst_file <- file.path(cfg$live_dir, dst_name)
 
     lines <- readLines(src_file, warn = FALSE)

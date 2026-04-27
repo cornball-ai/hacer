@@ -57,14 +57,10 @@ run_monday <- function(date = Sys.Date(), cfg = todo_config(),
   targets <- list()
   for (p in .period_types) {
     df <- nxt[[p]]
-    txt_path <- dst$live[.period_types == p]
-    targets[[txt_path]] <- build_todo_txt_lines(df, txt_path, p, cfg)
-    if (isTRUE(cfg$render_markdown)) {
-      md_path <- sub("\\.txt$", ".md", txt_path)
-      targets[[md_path]] <- build_markdown_lines(df, md_path, p, cfg)
-    }
+    md_path <- dst$live[.period_types == p]
+    targets[[md_path]] <- build_todo_txt_lines(df, md_path, p, cfg)
     if (isTRUE(cfg$render_html)) {
-      html_path <- sub("\\.txt$", ".html", txt_path)
+      html_path <- sub("\\.md$", ".html", md_path)
       targets[[html_path]] <- build_simple_html_lines(df, html_path, p)
     }
   }

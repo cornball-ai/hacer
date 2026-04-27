@@ -37,7 +37,7 @@ tasks <- function(file = NULL,
                   cfg = todo_config()) {
   files <- if (is.null(file)) {
     list.files(cfg$live_dir,
-               pattern = "^todo_\\d{6}_.+\\.txt$",
+               pattern = "^todo_\\d{6}_.+\\.(md|txt)$",
                full.names = TRUE,
                ignore.case = TRUE)
   } else {

@@ -16,9 +16,9 @@ cfg1 <- list(
   indent = 2L
 )
 
-f1 <- file.path(cfg1$live_dir, "todo_250915_daily.txt")
+f1 <- file.path(cfg1$live_dir, "todo_250915_daily.md")
 writeLines(c(
-  "# todo_250915_daily.txt",
+  "# todo_250915_daily.md",
   "",
   "#######################################",
   "",
@@ -34,7 +34,7 @@ writeLines(c(
 
 roll_day(date = as.Date("2025-09-16"), cfg = cfg1)
 
-f1_today <- file.path(cfg1$live_dir, "todo_250916_daily.txt")
+f1_today <- file.path(cfg1$live_dir, "todo_250916_daily.md")
 expect_true(file.exists(f1_today),
             info = "One-list mode: today's Daily file should be created")
 
@@ -58,21 +58,19 @@ cfg2 <- list(
 )
 
 for (p in c("Daily", "Week", "Month", "Quarter")) {
-  f <- file.path(cfg2$live_dir, sprintf("todo_250915_%s.txt", tolower(p)))
+  f <- file.path(cfg2$live_dir, sprintf("todo_250915_%s.md", tolower(p)))
   writeLines(c(
-    paste0("# todo_250915_", tolower(p), ".txt"),
+    paste0("# todo_250915_", tolower(p), ".md"),
     "",
-    "#######################################",
-    "",
-    "[ ] - Task",
-    "[x] - Done task"
+    "- [ ] Task",
+    "- [x] Done task"
   ), f)
 }
 
 roll_day(date = as.Date("2025-09-16"), cfg = cfg2)
 
 for (p in c("Daily", "Week", "Month", "Quarter")) {
-  f <- file.path(cfg2$live_dir, sprintf("todo_250916_%s.txt", tolower(p)))
+  f <- file.path(cfg2$live_dir, sprintf("todo_250916_%s.md", tolower(p)))
   expect_true(file.exists(f),
               info = paste("Four-cadence mode: today's", p, "file should be created"))
   out <- readLines(f, warn = FALSE)
@@ -93,9 +91,9 @@ cfg3 <- list(
   indent = 2L
 )
 
-f3 <- file.path(cfg3$live_dir, "todo_250915_daily.txt")
+f3 <- file.path(cfg3$live_dir, "todo_250915_daily.md")
 writeLines(c(
-  "# todo_250915_daily.txt",
+  "# todo_250915_daily.md",
   "",
   "#######################################",
   "",
@@ -105,7 +103,7 @@ writeLines(c(
 
 roll_day(date = as.Date("2025-09-16"), cfg = cfg3)
 
-out3 <- readLines(file.path(cfg3$live_dir, "todo_250916_daily.txt"), warn = FALSE)
+out3 <- readLines(file.path(cfg3$live_dir, "todo_250916_daily.md"), warn = FALSE)
 expect_true(any(grepl("\\[ \\] -\\*Exercise", out3)),
             info = "Recurring done task should reset to blank")
 expect_false(any(grepl("One-time", out3)),
@@ -120,9 +118,9 @@ cfg4 <- list(
   indent = 2L
 )
 
-f4 <- file.path(cfg4$live_dir, "todo_250915_daily.txt")
+f4 <- file.path(cfg4$live_dir, "todo_250915_daily.md")
 writeLines(c(
-  "# todo_250915_daily.txt",
+  "# todo_250915_daily.md",
   "",
   "#######################################",
   "",
@@ -132,7 +130,7 @@ writeLines(c(
 
 roll_day(date = as.Date("2025-09-16"), cfg = cfg4)
 
-out4 <- readLines(file.path(cfg4$live_dir, "todo_250916_daily.txt"), warn = FALSE)
+out4 <- readLines(file.path(cfg4$live_dir, "todo_250916_daily.md"), warn = FALSE)
 expect_true(any(grepl("\\[/\\] - In progress", out4)),
             info = "In-progress task should carry forward unchanged")
 expect_true(any(grepl("\\[!\\] - Blocked", out4)),
@@ -147,9 +145,9 @@ cfg5 <- list(
   indent = 2L
 )
 
-f5 <- file.path(cfg5$live_dir, "todo_250915_daily.txt")
+f5 <- file.path(cfg5$live_dir, "todo_250915_daily.md")
 writeLines(c(
-  "# todo_250915_daily.txt",
+  "# todo_250915_daily.md",
   "",
   "#######################################",
   "",
@@ -160,7 +158,7 @@ writeLines(c(
 
 roll_day(date = as.Date("2025-09-16"), cfg = cfg5)
 
-out5 <- readLines(file.path(cfg5$live_dir, "todo_250916_daily.txt"), warn = FALSE)
+out5 <- readLines(file.path(cfg5$live_dir, "todo_250916_daily.md"), warn = FALSE)
 child_pending_line <- grep("Child pending", out5, value = TRUE)
 expect_true(grepl("^  ", child_pending_line),
             info = "Child indentation should be preserved")
@@ -190,9 +188,9 @@ cfg7 <- list(
 
 writeLines("2025-09-14  Old entry", file.path(repo7, "done.log"))
 
-f7 <- file.path(cfg7$live_dir, "todo_250915_daily.txt")
+f7 <- file.path(cfg7$live_dir, "todo_250915_daily.md")
 writeLines(c(
-  "# todo_250915_daily.txt",
+  "# todo_250915_daily.md",
   "",
   "#######################################",
   "",
