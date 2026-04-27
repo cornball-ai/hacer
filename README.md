@@ -74,6 +74,12 @@ hacer::sync_from_daily()
 
 # fix parent statuses in a file you're editing (rolls parents to / or x)
 hacer::fix_parents(file_name = "~/todo/this_week/ToDo_250915_Daily.txt")
+
+# day-to-day: copy yesterday forward, drop done non-recurring, log to done.log
+hacer::roll_day()
+
+# read everything as a data.frame (parsed from this_week/)
+hacer::tasks()
 ```
 
 > Tip: add `use_repo("~/todo")` to `~/.Rprofile` so you don't need to call it each session.
@@ -91,6 +97,23 @@ HACER_REPO=~/todo r -e 'hacer::fix_parents("~/todo/this_week/ToDo_250915_Daily.t
 Resolution order for the repo path is: `repo_dir` argument → `options("hacer.repo")` → `HACER_REPO` env var → `tools::R_user_dir("hacer", "data")`. The env var makes the "stateless one-shot" case ergonomic. The `R_user_dir()` fallback is CRAN-safe but ugly (`~/.local/share/R/hacer/` on Linux), so most users `instantiate_todo("~/todo")` and persist `use_repo("~/todo")` in `~/.Rprofile`.
 
 If you're running [corteza](https://github.com/cornball-ai/corteza)'s MCP server, hacer's exports register automatically as `hacer::*` tools (on the corteza `hacer` branch) so any MCP-capable agent can call them.
+
+### Reading: `tasks()` is the structured API
+
+`hacer::tasks()` is the read interface for agents. It returns the entire task set across `this_week/` as a `data.frame` so you can filter and reason without re-parsing text:
+
+```r
+tasks()                          # everything across all four cadences
+tasks(status = "in_progress")    # just [/] tasks
+tasks(recurring = TRUE)          # just *-prefixed tasks
+tasks(file = "~/todo/this_week/ToDo_250915_Daily.txt")
+```
+
+Columns: `id`, `file`, `line`, `depth`, `status`, `recurring`, `text`, `parent_id`. `status` normalizes the bracket symbols to `"todo"`, `"in_progress"`, `"done"`, and `"blocked"`.
+
+IDs are **ephemeral** (`<basename>:L<line>`). They're stable across re-parses of an unchanged file but shift the moment a line is inserted or removed. Don't persist them across edits — re-call `tasks()` and rebuild your view.
+
+The plain-text files remain the source of truth. `tasks()` is a read-through projection, not a cache.
 
 ## Agent consumption (Cornelius)
 

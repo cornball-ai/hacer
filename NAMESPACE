@@ -15,6 +15,7 @@ export(roll_day)
 export(rollup_status)
 export(run_monday)
 export(sync_from_daily)
+export(tasks)
 export(todo_config)
 export(use_repo)
 
