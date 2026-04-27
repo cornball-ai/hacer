@@ -42,6 +42,15 @@ r -e 'tinypkgr::check()'
 - Text files in `this_week/` remain the source of truth. `tasks()` is a read-through projection, not a cache.
 - Internal callers that need the full schema (sections, period, paths, ordering) should keep using `parse_todo()`.
 
+## Recurring manifest
+
+`recurring.txt` at the repo root declares recurring tasks with frequencies. `run_monday()` reads it (via `read_recurring()`) and materializes day-by-day rows for Daily plus a flat list for Week/Month/Quarter. Non-recurring user tasks carry forward unchanged.
+
+- Frequency syntax: weekday letters `M T W R F` (R = Thursday), `*` alias for `MTWRF`, optional week-of-month prefix `1W:`..`5W:`.
+- Nested paths via ` > ` separator; intermediate ancestors auto-materialized.
+- Internals in `R/recurring.R`: `.parse_freq()`, `.recurring_for_date()`, `.materialize_daily()`, `.materialize_period()`, `.merge_recurring()`.
+- Opt-in: missing `recurring.txt` is a no-op, run_monday behaves as pre-0.1.8.
+
 ## Preview mode
 
 Every mutator (`roll_day`, `run_monday`, `fix_parents`, `next_day`, `sync_from_daily`, `instantiate_todo`) accepts `preview = TRUE` and returns a `hacer_preview` describing the would-be change without writing. Set `HACER_PREVIEW=1` to flip the default — useful for one-shot agent invocations that should be inspectable before they touch the user's todo repo. Internals live in `R/preview.R`; each mutator builds a `targets` list of `path -> new_lines` and dispatches via `.write_or_preview()`.
