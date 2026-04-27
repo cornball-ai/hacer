@@ -82,7 +82,6 @@ tasks <- function(file = NULL,
   basenm <- basename(path)
   if (!length(lines)) return(.empty_tasks_df())
 
-  task_re <- "^\\[( |/|x|!)\\]\\s*-"
   status_map <- c(" " = "todo", "/" = "in_progress",
                   "x" = "done", "!" = "blocked")
 
@@ -93,19 +92,13 @@ tasks <- function(file = NULL,
   raw_text   <- character(length(lines))
 
   for (i in seq_along(lines)) {
-    ln <- lines[[i]]
-    stripped <- sub("^\\s+", "", ln)
-    if (!grepl(task_re, stripped)) next
-    is_task[i] <- TRUE
-    nspaces <- nchar(ln) - nchar(stripped)
-    raw_depth[i]  <- as.integer(nspaces %/% indent)
-    raw_status[i] <- substr(stripped, 2L, 2L)
-    rest <- sub("^\\[( |/|x|!)\\]\\s*-\\s*", "", stripped)
-    if (startsWith(rest, "*")) {
-      raw_recur[i] <- TRUE
-      rest <- sub("^\\*", "", rest)
-    }
-    raw_text[i] <- trimws(rest)
+    parsed <- .parse_task_line(lines[[i]], indent)
+    if (is.null(parsed)) next
+    is_task[i]    <- TRUE
+    raw_depth[i]  <- parsed$level
+    raw_status[i] <- parsed$status
+    raw_recur[i]  <- parsed$recur
+    raw_text[i]   <- parsed$name
   }
 
   if (!any(is_task)) return(.empty_tasks_df())

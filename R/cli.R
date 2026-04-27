@@ -248,13 +248,13 @@ next_day <- function(date = Sys.Date(), cfg = todo_config(),
       last_was_task <- FALSE
       next
     }
-    if (!grepl("^\\s*\\[", ln)) next
+    parsed <- .parse_task_line(ln)
+    if (is.null(parsed)) next
 
-    status <- substr(sub("^\\s*", "", ln), 2, 2)
-    if (status == "x") next
+    if (parsed$status == "x") next
 
-    is_daily_recur <- grepl("-\\s*\\*?(Email|ToDo)\\s*$", ln, ignore.case = TRUE)
-    if (is_daily_recur && status == "/") next
+    is_daily_recur <- grepl("^(Email|ToDo)$", parsed$name, ignore.case = TRUE)
+    if (is_daily_recur && parsed$status == "/") next
 
     ln_reset <- sub("\\[/\\]", "[ ]", ln)
     ln_reset <- sub("\\[x\\]", "[ ]", ln_reset)
@@ -264,13 +264,11 @@ next_day <- function(date = Sys.Date(), cfg = todo_config(),
 
   keep_today <- character()
   for (ln in today_lines) {
-    if (!grepl("^\\s*\\[", ln)) {
+    parsed <- .parse_task_line(ln)
+    if (is.null(parsed)) {
       keep_today <- c(keep_today, ln)
-    } else {
-      status <- substr(sub("^\\s*", "", ln), 2, 2)
-      if (status %in% c("/", "x", "!")) {
-        keep_today <- c(keep_today, ln)
-      }
+    } else if (parsed$status %in% c("/", "x", "!")) {
+      keep_today <- c(keep_today, ln)
     }
   }
 

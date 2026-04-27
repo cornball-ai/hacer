@@ -71,26 +71,26 @@ roll_day <- function(date = Sys.Date(), cfg = todo_config(),
     out_lines <- character()
 
     for (ln in lines) {
-      stripped <- sub("^\\s+", "", ln)
-      if (!grepl("^\\[( |/|x|!)\\]\\s*-", stripped)) {
+      parsed <- .parse_task_line(ln)
+      if (is.null(parsed)) {
         out_lines <- c(out_lines, ln)
         next
       }
 
-      status <- substr(stripped, 2L, 2L)
-      rest <- sub("^\\[( |/|x|!)\\]\\s*-\\s*", "", stripped)
-      recur <- grepl("^\\*", rest)
-
-      if (status == "x" && !recur) {
-        indent <- sub("^(\\s*).*", "\\1", ln)
-        task_text <- sub("^\\s*\\[( |/|x|!)\\]\\s*-\\s*", "", ln)
+      if (parsed$status == "x" && !parsed$recur) {
+        indent_lead <- sub("^(\\s*).*", "\\1", ln)
+        task_text <- if (grepl("^\\s*-\\s+\\[", ln)) {
+          sub("^\\s*-\\s+\\[( |/|x|!)\\]\\s+", "", ln)
+        } else {
+          sub("^\\s*\\[( |/|x|!)\\]\\s*-\\s*", "", ln)
+        }
         done_log <- c(
           done_log,
-          paste0(format(date, "%Y-%m-%d"), "  ", indent, task_text))
+          paste0(format(date, "%Y-%m-%d"), "  ", indent_lead, task_text))
         next
       }
 
-      if (status == "x" && recur) {
+      if (parsed$status == "x" && parsed$recur) {
         ln <- sub("[x]", "[ ]", ln, fixed = TRUE)
       }
 
