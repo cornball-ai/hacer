@@ -11,5 +11,7 @@ paths_for(date = Sys.Date(), cfg = todo_config())
 \item{cfg}{A config list from `todo_config()`.}
 }
 \description{
-File paths for a given week's ToDo files
+Returns the canonical lowercase filenames. Pre-0.1.7 repos that still
+have capitalized `ToDo_*.txt` files are still recognized by readers; new
+writes always emit lowercase.
 }

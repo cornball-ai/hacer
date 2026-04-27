@@ -15,11 +15,13 @@ run_monday <- function(date = Sys.Date(), cfg = todo_config(),
   this_mon <- .monday_of(date)
   prev_mon <- this_mon - 7L
 
-  prev <- paths_for(prev_mon, cfg)
-  if (!all(file.exists(prev$live)) && !all(file.exists(prev$archive))) {
+  prev_live <- .resolve_period_paths(prev_mon, cfg$live_dir)
+  prev_arch <- .resolve_period_paths(prev_mon, cfg$archive_dir)
+  if (!all(file.exists(prev_live)) && !all(file.exists(prev_arch))) {
     stop("Previous week's files not found in live or archive.")
   }
-  src <- if (all(file.exists(prev$live))) prev$live else prev$archive
+  src <- if (all(file.exists(prev_live))) prev_live else prev_arch
+  prev <- list(live = prev_live, archive = prev_arch)
 
   daily   <- parse_todo(src[.period_types == "Daily"],   "Daily")
   week    <- parse_todo(src[.period_types == "Week"],    "Week")
@@ -69,8 +71,11 @@ run_monday <- function(date = Sys.Date(), cfg = todo_config(),
 #' @export
 infer_period_from_filename <- function(f){
   b <- basename(f)
-  if (grepl("_Daily", b)) "Daily" else if (grepl("_Week", b)) "Week" else
-    if (grepl("_Month", b)) "Month" else if (grepl("_Quarter", b)) "Quarter" else NA_character_
+  if (grepl("_daily", b, ignore.case = TRUE)) "Daily"
+  else if (grepl("_week", b, ignore.case = TRUE)) "Week"
+  else if (grepl("_month", b, ignore.case = TRUE)) "Month"
+  else if (grepl("_quarter", b, ignore.case = TRUE)) "Quarter"
+  else NA_character_
 }
 
 #' Roll up parent statuses in a single file
@@ -101,11 +106,12 @@ fix_parents <- function(file_name, preview = .preview_default()){
 #' @export
 sync_from_daily <- function(date = Sys.Date(), cfg = todo_config(),
                             preview = .preview_default()){
-  p   <- paths_for(date, cfg)
-  d   <- parse_todo(p$live[grepl("_Daily", p$live)], "Daily")
-  W   <- parse_todo(p$live[grepl("_Week",  p$live)], "Week")
-  M   <- parse_todo(p$live[grepl("_Month", p$live)], "Month")
-  Q   <- parse_todo(p$live[grepl("_Quarter",p$live)], "Quarter")
+  mon <- .monday_of(date)
+  live_paths <- .resolve_period_paths(mon, cfg$live_dir)
+  d   <- parse_todo(live_paths[.period_types == "Daily"],   "Daily")
+  W   <- parse_todo(live_paths[.period_types == "Week"],    "Week")
+  M   <- parse_todo(live_paths[.period_types == "Month"],   "Month")
+  Q   <- parse_todo(live_paths[.period_types == "Quarter"], "Quarter")
 
   add_missing <- function(src, tgt){
     if (!nrow(src)) return(tgt)
@@ -145,9 +151,9 @@ sync_from_daily <- function(date = Sys.Date(), cfg = todo_config(),
   W <- inherit_recur_to_parents(W); M <- inherit_recur_to_parents(M); Q <- inherit_recur_to_parents(Q)
   W <- rollup_status(W);             M <- rollup_status(M);             Q <- rollup_status(Q)
 
-  w_path <- p$live[grepl("_Week",    p$live)]
-  m_path <- p$live[grepl("_Month",   p$live)]
-  q_path <- p$live[grepl("_Quarter", p$live)]
+  w_path <- live_paths[.period_types == "Week"]
+  m_path <- live_paths[.period_types == "Month"]
+  q_path <- live_paths[.period_types == "Quarter"]
   targets <- list()
   targets[[w_path]] <- build_todo_txt_lines(W, w_path, "Week",  cfg)
   targets[[m_path]] <- build_todo_txt_lines(M, m_path, "Month", cfg)
@@ -172,8 +178,9 @@ sync_from_daily <- function(date = Sys.Date(), cfg = todo_config(),
 #' @export
 next_day <- function(date = Sys.Date(), cfg = todo_config(),
                      preview = .preview_default()) {
-  p <- paths_for(date, cfg)
-  daily_file <- p$live[grepl("_Daily", p$live)]
+  mon <- .monday_of(date)
+  live_paths <- .resolve_period_paths(mon, cfg$live_dir)
+  daily_file <- live_paths[.period_types == "Daily"]
   if (!file.exists(daily_file)) stop("Daily file not found: ", daily_file)
 
   lines <- readLines(daily_file, warn = FALSE)

@@ -9,11 +9,11 @@ status_of <- function(lines, task_label_regex) {
 
 # Create temp Daily file
 tmpdir <- tempdir()
-f <- file.path(tmpdir, "ToDo_250915_Daily.txt")
+f <- file.path(tmpdir, "todo_250915_daily.txt")
 
 # Case 1: child is in-progress -> parent should be '/'
 lines_case1 <- c(
-  "# ToDo_250915_Daily.txt",
+  "# todo_250915_daily.txt",
   "",
   "#######################################",
   "",
@@ -38,7 +38,7 @@ expect_equal(status_of(out1, "House"), "/",
 
 # Case 2: all children done -> parent should be 'x'
 lines_case2 <- c(
-  "# ToDo_250915_Daily.txt",
+  "# todo_250915_daily.txt",
   "",
   "#######################################",
   "",

@@ -12,9 +12,9 @@ tmp_repo <- function() {
 repo1 <- tmp_repo()
 cfg1 <- list(live_dir = file.path(repo1, "this_week"), indent = 2L)
 
-f1 <- file.path(cfg1$live_dir, "ToDo_250915_Daily.txt")
+f1 <- file.path(cfg1$live_dir, "todo_250915_daily.txt")
 writeLines(c(
-  "# ToDo_250915_Daily.txt",
+  "# todo_250915_daily.txt",
   "",
   "#######################################",
   "",
@@ -54,7 +54,7 @@ expect_equal(df1$text,
                "Recurring", "Blocked one"),
              info = "Text strips status, dash, recurring marker")
 expect_equal(df1$file,
-             rep("ToDo_250915_Daily.txt", 5L),
+             rep("todo_250915_daily.txt", 5L),
              info = "file column is the basename")
 expect_equal(df1$depth, c(0L, 1L, 1L, 0L, 0L),
              info = "Depth derived from leading-space count")
@@ -70,9 +70,9 @@ unlink(repo1, recursive = TRUE)
 repo2 <- tmp_repo()
 cfg2 <- list(live_dir = file.path(repo2, "this_week"), indent = 2L)
 
-f2 <- file.path(cfg2$live_dir, "ToDo_250915_Daily.txt")
+f2 <- file.path(cfg2$live_dir, "todo_250915_daily.txt")
 writeLines(c(
-  "# ToDo_250915_Daily.txt",
+  "# todo_250915_daily.txt",
   "",
   "#######################################",
   "",
@@ -111,9 +111,9 @@ unlink(repo2, recursive = TRUE)
 repo3 <- tmp_repo()
 cfg3 <- list(live_dir = file.path(repo3, "this_week"), indent = 2L)
 
-f3 <- file.path(cfg3$live_dir, "ToDo_250915_Daily.txt")
+f3 <- file.path(cfg3$live_dir, "todo_250915_daily.txt")
 writeLines(c(
-  "# ToDo_250915_Daily.txt",
+  "# todo_250915_daily.txt",
   "",
   "[ ] - todo a",
   "[/] - in progress a",
@@ -155,9 +155,10 @@ repo4 <- tmp_repo()
 cfg4 <- list(live_dir = file.path(repo4, "this_week"), indent = 2L)
 
 for (p in c("Daily", "Week", "Month", "Quarter")) {
-  f <- file.path(cfg4$live_dir, sprintf("ToDo_250915_%s.txt", p))
+  f <- file.path(cfg4$live_dir,
+                 sprintf("todo_250915_%s.txt", tolower(p)))
   writeLines(c(
-    paste0("# ToDo_250915_", p, ".txt"),
+    paste0("# todo_250915_", tolower(p), ".txt"),
     "",
     "[ ] - One per file"
   ), f)
@@ -166,15 +167,15 @@ for (p in c("Daily", "Week", "Month", "Quarter")) {
 df4 <- tasks(cfg = cfg4)
 expect_equal(nrow(df4), 4L, info = "All four cadence files contribute one row each")
 expect_equal(sort(unique(df4$file)),
-             sort(paste0("ToDo_250915_",
-                         c("Daily", "Month", "Quarter", "Week"), ".txt")),
+             sort(paste0("todo_250915_",
+                         c("daily", "month", "quarter", "week"), ".txt")),
              info = "file column reflects the source basename")
 
 # Single-file argument scopes to that file only
-df4_one <- tasks(file = file.path(cfg4$live_dir, "ToDo_250915_Daily.txt"),
+df4_one <- tasks(file = file.path(cfg4$live_dir, "todo_250915_daily.txt"),
                  cfg = cfg4)
 expect_equal(nrow(df4_one), 1L, info = "Single-file arg parses only that file")
-expect_equal(df4_one$file, "ToDo_250915_Daily.txt",
+expect_equal(df4_one$file, "todo_250915_daily.txt",
              info = "Single-file arg returns matching basename")
 
 unlink(repo4, recursive = TRUE)
@@ -195,7 +196,7 @@ unlink(repo5, recursive = TRUE)
 
 # ---- Case 6: Missing file argument errors clearly ----
 expect_error(
-  tasks(file = "/no/such/path/ToDo_250915_Daily.txt"),
+  tasks(file = "/no/such/path/todo_250915_daily.txt"),
   pattern = "not found",
   info = "Non-existent file path errors with a clear message"
 )
@@ -204,7 +205,7 @@ expect_error(
 repo7 <- tmp_repo()
 cfg7 <- list(live_dir = file.path(repo7, "this_week"), indent = 2L)
 
-f7 <- file.path(cfg7$live_dir, "ToDo_250915_Daily.txt")
+f7 <- file.path(cfg7$live_dir, "todo_250915_daily.txt")
 writeLines(c(
   "# header",                 # 1
   "",                         # 2

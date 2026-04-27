@@ -37,8 +37,9 @@ tasks <- function(file = NULL,
                   cfg = todo_config()) {
   files <- if (is.null(file)) {
     list.files(cfg$live_dir,
-               pattern = "^ToDo_\\d{6}_.+\\.txt$",
-               full.names = TRUE)
+               pattern = "^todo_\\d{6}_.+\\.txt$",
+               full.names = TRUE,
+               ignore.case = TRUE)
   } else {
     nm <- path.expand(file)
     miss <- nm[!file.exists(nm)]
