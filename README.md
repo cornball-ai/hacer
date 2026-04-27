@@ -31,6 +31,7 @@ run_monday()                  # advances week, archives prior
 ```
 ~/todo/
   ├─ hacer_config.R           # edit paths/options here
+  ├─ recurring.txt            # recurring tasks + frequencies (optional)
   ├─ this_week/               # live files you edit daily
   │   ├─ todo_yymmdd_daily.txt
   │   ├─ todo_yymmdd_week.txt
@@ -52,6 +53,29 @@ run_monday()                  # advances week, archives prior
   - any `/` or mix of `x`/`/`/blank → parent `/`
   - all blank → parent blank
 - Blocked is sticky. `roll_day()`, `run_monday()`, and `next_day()` all preserve `[!]` items verbatim until you explicitly change them.
+
+## Recurring tasks (`recurring.txt`)
+
+Declare repeating tasks once, in a single manifest at the repo root. `run_monday()` materializes them into the right day sections of Daily and a flat list in Week/Month/Quarter — so you stop hand-duplicating Exercise across Monday-Friday.
+
+```
+# ~/todo/recurring.txt
+# <freq>  <path>
+M       Email                                    # Mondays only
+M       todo
+MR      wiki                                     # Mon + Thu
+*       Exercise                                 # every weekday (alias for MTWRF)
+1W:M    Bills                                    # first Monday of the month
+MTWR    cornball.ai > Lil Casey > Countdown      # nested path
+```
+
+- Day codes: `M T W R F` (R = Thursday). Combine adjacently: `MTWRF`, `MR`, `WF`.
+- `*` is shorthand for `MTWRF`.
+- Optional week-of-month prefix `<n>W:` (e.g. `1W:M` = first Monday of the month).
+- Nested paths use ` > ` as the separator; ancestors are auto-materialized as recurring containers.
+- Non-recurring one-off tasks (e.g. an ad-hoc `[ ] - CO2`) live in Daily as before; they aren't touched by the manifest.
+
+The manifest is **opt-in**. If `recurring.txt` is absent, `run_monday()` behaves exactly as it did pre-0.1.8.
 
 ## Period & carry-over logic
 
