@@ -1,6 +1,6 @@
 # hacer
 
-Plain-text nested ToDo files: parse, roll up, and advance.
+Plain-text nested ToDo files in markdown: parse, roll up, and advance.
 
 Edit in any text editor. Run a couple of small helpers. Keep history in git.
 
@@ -33,20 +33,37 @@ run_monday()                  # advances week, archives prior
   ├─ hacer_config.R           # edit paths/options here
   ├─ recurring.txt            # recurring tasks + frequencies (optional)
   ├─ this_week/               # live files you edit daily
-  │   ├─ todo_yymmdd_daily.txt
-  │   ├─ todo_yymmdd_week.txt
-  │   ├─ todo_yymmdd_month.txt
-  │   └─ todo_yymmdd_quarter.txt
+  │   ├─ todo_yymmdd_daily.md
+  │   ├─ todo_yymmdd_week.md
+  │   ├─ todo_yymmdd_month.md
+  │   └─ todo_yymmdd_quarter.md
   └─ archive/                 # prior weeks (commit/push to GitHub)
 ```
 
-> Pre-0.1.7 repos used capitalized `ToDo_YYMMDD_*.txt` filenames. Readers stay case-insensitive so legacy files keep working — new writes always emit the lowercase form.
+> Pre-0.2.0 repos used `[X] - text` syntax in `.txt` files. Readers still understand both formats during transition; new writes always emit standard markdown task lists in `.md`. Run `migrate_to_markdown()` to convert your live files in one shot.
 
 ## Editing rules (syntax)
 
-- Two spaces per indent level for sub-tasks.
-- Status: `[ ]` = todo, `[/]` = in progress, `[x]` = done, `[!]` = blocked (attention needed).
-- Recurring: prefix name with `*` (e.g., `[ ] -*Exercise`) → `recur = TRUE`.
+Standard markdown task list. Two spaces per indent level:
+
+```markdown
+# todo_260427_daily.md
+
+## Monday
+
+- [ ] House
+  - [/] Drywall
+  - [x] Trim
+- [!] Permit blocked on city review
+
+## Tuesday
+
+- [ ] CO2
+```
+
+- Status: `[ ]` = todo, `[/]` = in progress, `[x]` = done, `[!]` = blocked (attention needed). `[x]` and `[ ]` are vanilla markdown; `[/]` and `[!]` are custom states (Obsidian renders them, GitHub falls back to plain text).
+- Day sections in Daily are H2 headers (`## Monday`).
+- Recurring tasks live in `recurring.txt`, not as inline `*` markers in the file. The pre-0.2.0 `*` marker is still parsed (so legacy files keep working) but the writer never emits it.
 - Parents auto-roll:
   - any child `[!]` → parent `[!]` (blocked bubbles up; takes precedence)
   - all children `x` → parent `x`
@@ -73,16 +90,16 @@ MTWR    cornball.ai > Lil Casey > Countdown      # nested path
 - `*` is shorthand for `MTWRF`.
 - Optional week-of-month prefix `<n>W:` (e.g. `1W:M` = first Monday of the month).
 - Nested paths use ` > ` as the separator; ancestors are auto-materialized as recurring containers.
-- Non-recurring one-off tasks (e.g. an ad-hoc `[ ] - CO2`) live in Daily as before; they aren't touched by the manifest.
+- Non-recurring one-off tasks (e.g. an ad-hoc `- [ ] CO2`) live in Daily as before; they aren't touched by the manifest.
 
-The manifest is **opt-in**. If `recurring.txt` is absent, `run_monday()` behaves exactly as it did pre-0.1.8.
+The manifest is **opt-in**. If `recurring.txt` is absent, `run_monday()` carries last week forward without materializing anything new.
 
 ## Period & carry-over logic
 
 - Weekly rollover (`run_monday()`):
-  - **Daily/Week**: drop items that are `x` and **not** recurring; keep `/`; keep all `*`.
-  - **Month/Quarter**: keep `x` until period changes; at new month/quarter, non-recurring `x` are cleared; recurring `x` reset to blank.
-  - Recurring `*` **bubble up to parents** so containers (projects) stick around.
+  - **Daily/Week**: drop items that are `x` and not in `recurring.txt`; keep `/` and `[!]`.
+  - **Month/Quarter**: keep `x` until period changes; at new month/quarter, non-recurring `x` are cleared.
+  - Recurring items are materialized fresh from `recurring.txt`.
 - **Strict subset**: Week ⊆ Month ⊆ Quarter. If you add an ad-hoc task in **Daily**, you can sync it upward.
 
 ## Common commands
@@ -91,7 +108,7 @@ The manifest is **opt-in**. If `recurring.txt` is absent, `run_monday()` behaves
 # set the active repo for the session
 hacer::use_repo("~/todo")
 
-# weekly rollover (creates new todo_yymmdd_* in this_week/, archives prior)
+# weekly rollover (creates new todo_yymmdd_*.md in this_week/, archives prior)
 hacer::run_monday()
 
 # advance to tomorrow's daily section (preserves blank-line groups)
@@ -101,16 +118,36 @@ hacer::next_day()
 hacer::sync_from_daily()
 
 # fix parent statuses in a file you're editing (rolls parents to / or x)
-hacer::fix_parents(file_name = "~/todo/this_week/todo_250915_daily.txt")
+hacer::fix_parents(file_name = "~/todo/this_week/todo_260427_daily.md")
 
 # day-to-day: copy yesterday forward, drop done non-recurring, log to done.log
 hacer::roll_day()
 
 # read everything as a data.frame (parsed from this_week/)
 hacer::tasks()
+
+# convert legacy .txt files to .md (one-shot)
+hacer::migrate_to_markdown()
 ```
 
 > Tip: add `use_repo("~/todo")` to `~/.Rprofile` so you don't need to call it each session.
+
+## Migrating from pre-0.2.0
+
+Older repos used `[X] - text` syntax in `.txt` files. The dual-format parser keeps reading them, but the writer no longer emits that style. To convert in one shot:
+
+```r
+library(hacer)
+use_repo("~/todo")
+
+# Inspect first — preview reports the would-be conversions
+hacer::migrate_to_markdown(preview = TRUE)
+
+# Then commit
+hacer::migrate_to_markdown()
+```
+
+`migrate_to_markdown()` walks `this_week/` only (archive files stay legacy unless you decide they need attention), rewrites each `.txt` as `.md` in the markdown task-list syntax, and removes the `.txt` source. It also surfaces a list of any tasks that carried the legacy `*` recurring marker — copy those paths into `recurring.txt` so they keep recurring, otherwise they become one-offs.
 
 ## For LLM CLI agents
 
@@ -119,7 +156,7 @@ hacer's functions work fine as one-shot R calls from any agent that can spawn `R
 ```bash
 HACER_REPO=~/todo r -e 'hacer::run_monday()'
 HACER_REPO=~/todo r -e 'hacer::next_day()'
-HACER_REPO=~/todo r -e 'hacer::fix_parents("~/todo/this_week/todo_250915_daily.txt")'
+HACER_REPO=~/todo r -e 'hacer::fix_parents("~/todo/this_week/todo_260427_daily.md")'
 ```
 
 Resolution order for the repo path is: `repo_dir` argument → `options("hacer.repo")` → `HACER_REPO` env var → `tools::R_user_dir("hacer", "data")`. The env var makes the "stateless one-shot" case ergonomic. The `R_user_dir()` fallback is CRAN-safe but ugly (`~/.local/share/R/hacer/` on Linux), so most users `instantiate_todo("~/todo")` and persist `use_repo("~/todo")` in `~/.Rprofile`.
@@ -135,10 +172,10 @@ pv <- hacer::roll_day(preview = TRUE)
 print(pv)
 #> hacer preview
 #>   created (1):
-#>     + ~/todo/this_week/todo_250916_daily.txt
+#>     + ~/todo/this_week/todo_260428_daily.md
 #>   done.log appends (2):
-#>     > 2025-09-16  [x] - Some finished task
-#>     > 2025-09-16    [x] - A nested done item
+#>     > 2026-04-28  - [x] Some finished task
+#>     > 2026-04-28    - [x] A nested done item
 ```
 
 Set `HACER_PREVIEW=1` to flip the default for a one-shot CLI agent so it never accidentally writes:
@@ -148,7 +185,7 @@ HACER_REPO=~/todo HACER_PREVIEW=1 r -e 'hacer::run_monday()'
 HACER_REPO=~/todo HACER_PREVIEW=1 r -e 'hacer::roll_day()'
 ```
 
-Covers `roll_day()`, `run_monday()`, `fix_parents()`, `next_day()`, `sync_from_daily()`, and `instantiate_todo()`. The preview lists `files_created`, `files_modified`, line-level diffs, and any `done.log` lines that would be appended.
+Covers `roll_day()`, `run_monday()`, `fix_parents()`, `next_day()`, `sync_from_daily()`, `instantiate_todo()`, and `migrate_to_markdown()`. The preview lists `files_created`, `files_modified`, line-level diffs, and any `done.log` lines that would be appended.
 
 ### Reading: `tasks()` is the structured API
 
@@ -157,8 +194,8 @@ Covers `roll_day()`, `run_monday()`, `fix_parents()`, `next_day()`, `sync_from_d
 ```r
 tasks()                          # everything across all four cadences
 tasks(status = "in_progress")    # just [/] tasks
-tasks(recurring = TRUE)          # just *-prefixed tasks
-tasks(file = "~/todo/this_week/todo_250915_daily.txt")
+tasks(recurring = TRUE)          # just tasks materialized from recurring.txt
+tasks(file = "~/todo/this_week/todo_260427_daily.md")
 ```
 
 Columns: `id`, `file`, `line`, `depth`, `status`, `recurring`, `text`, `parent_id`. `status` normalizes the bracket symbols to `"todo"`, `"in_progress"`, `"done"`, and `"blocked"`.
@@ -177,7 +214,7 @@ To get your repos tracked: add them to your todo files (any cadence) and ensure 
 
 ## Weekly routine (Mon AM)
 
-1. Open `~/todo/this_week/todo_yymmdd_daily.txt` and plan the week/day.
+1. Open `~/todo/this_week/todo_yymmdd_daily.md` and plan the week/day.
 2. `run_monday()` to advance periods and archive last week.
 3. `git -C ~/todo add archive && git -C ~/todo commit -m "Archive week" && git -C ~/todo push`.
 
@@ -204,7 +241,6 @@ Add live artifacts to `.gitignore` (archive is what you push):
 ```
 this_week/
 *.html
-*.md
 ```
 
 ## Troubleshooting
@@ -213,6 +249,7 @@ this_week/
 - **Wrong repo**: call `use_repo("~/todo")` again (session-scoped).
 - **No new files**: check `hacer_config.R` paths; verify `this_week/` exists.
 - **Parent status didn't change**: run `fix_parents("<file>")`.
+- **Mixed `.txt` and `.md` in `this_week/`**: run `migrate_to_markdown()` to consolidate.
 
 ## License
 
