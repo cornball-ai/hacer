@@ -42,12 +42,14 @@ run_monday()                  # advances week, archives prior
 ## Editing rules (syntax)
 
 - Two spaces per indent level for sub-tasks.
-- Status: `[ ]` = todo, `[/]` = in progress, `[x]` = done.
+- Status: `[ ]` = todo, `[/]` = in progress, `[x]` = done, `[!]` = blocked (attention needed).
 - Recurring: prefix name with `*` (e.g., `[ ] -*Exercise`) → `recur = TRUE`.
 - Parents auto-roll:
+  - any child `[!]` → parent `[!]` (blocked bubbles up; takes precedence)
   - all children `x` → parent `x`
   - any `/` or mix of `x`/`/`/blank → parent `/`
   - all blank → parent blank
+- Blocked is sticky. `roll_day()`, `run_monday()`, and `next_day()` all preserve `[!]` items verbatim until you explicitly change them.
 
 ## Period & carry-over logic
 

@@ -23,7 +23,8 @@
 
 .reset_all_status <- function(df) {
   if (!nrow(df)) return(df)
-  df$status <- " "
+  # Blocked tasks survive the weekly reset so attention-needed work isn't lost.
+  df$status[df$status != "!"] <- " "
   df
 }
 

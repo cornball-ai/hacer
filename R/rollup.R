@@ -11,7 +11,8 @@ rollup_status <- function(df) {
     for (p in parents) {
       kids <- df$status[!is.na(df$parent_id) & df$parent_id == p]
       if (!length(kids)) next
-      new <- if (all(kids == "x")) "x"
+      new <- if (any(kids == "!")) "!"
+      else if (all(kids == "x")) "x"
       else if (any(kids == "/") || any(kids == "x")) "/"
       else " "
       df$status[df$id == p] <- new

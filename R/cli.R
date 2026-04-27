@@ -224,7 +224,7 @@ next_day <- function(date = Sys.Date(), cfg = todo_config()) {
       keep_today <- c(keep_today, ln)
     } else {
       status <- substr(sub("^\\s*", "", ln), 2, 2)
-      if (status %in% c("/", "x")) {
+      if (status %in% c("/", "x", "!")) {
         keep_today <- c(keep_today, ln)
       }
       # Drop [ ] unchecked items
