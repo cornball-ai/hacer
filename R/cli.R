@@ -30,6 +30,29 @@ run_monday <- function(date = Sys.Date(), cfg = todo_config(),
 
   nxt <- advance_period(daily, week, month, quarter, prev_mon, this_mon)
 
+  # Apply recurring manifest if present in the repo. Recurring items become
+  # generated from the manifest; non-recurring user tasks carry forward.
+  rec_path <- file.path(dirname(cfg$live_dir), "recurring.txt")
+  if (file.exists(rec_path)) {
+    rec <- read_recurring(rec_path)
+    if (nrow(rec)) {
+      daily_sections <- if (!is.null(cfg$daily_sections)) cfg$daily_sections
+                        else c("Monday","Tuesday","Wednesday","Thursday","Friday")
+      nxt$Daily <- .merge_recurring(
+        .strip_recurring(nxt$Daily),
+        .materialize_daily(rec, this_mon, daily_sections))
+      nxt$Week    <- .merge_recurring(
+        .strip_recurring(nxt$Week),
+        .materialize_period(rec, "Week"))
+      nxt$Month   <- .merge_recurring(
+        .strip_recurring(nxt$Month),
+        .materialize_period(rec, "Month"))
+      nxt$Quarter <- .merge_recurring(
+        .strip_recurring(nxt$Quarter),
+        .materialize_period(rec, "Quarter"))
+    }
+  }
+
   dst <- paths_for(this_mon, cfg)
   targets <- list()
   for (p in .period_types) {

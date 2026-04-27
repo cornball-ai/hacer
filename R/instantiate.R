@@ -114,8 +114,29 @@ instantiate_todo <- function(repo_dir,
       "- Edit `hacer_config.R` to tweak paths and options.",
       paste0("- Current week files live in: `", live_dir, "`"),
       paste0("- Archive lives in: `", archive_dir, "`"),
-      "- Run `hacer::run_monday()` each Monday (or set a cron job).",
+      "- Recurring tasks declared in `recurring.txt`; `run_monday()` materializes them.",
       "- Edit `.txt` files directly in RStudio; Markdown/HTML mirrors are optional."
+    )
+  }
+
+  recurring_path <- file.path(repo_dir, "recurring.txt")
+  if (!file.exists(recurring_path) || overwrite) {
+    targets[[recurring_path]] <- c(
+      "# recurring.txt - tasks that repeat by frequency",
+      "#",
+      "# Format: <freq>  <path>",
+      "#   Day codes:  M T W R F  (R = Thursday)",
+      "#   Combine adjacently:  MR = Mon+Thu, MTWRF = every weekday, * = MTWRF",
+      "#   Week-of-month prefix: 1W..5W (e.g. 1W:M = first Monday of month)",
+      "#",
+      "# run_monday() reads this file and materializes the recurring rows into",
+      "# each day section of Daily, plus a flat list in Week/Month/Quarter.",
+      "",
+      "M       Email",
+      "M       todo",
+      "MR      wiki",
+      "*       Exercise",
+      "1W:M    Bills"
     )
   }
 
