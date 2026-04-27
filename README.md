@@ -32,12 +32,14 @@ run_monday()                  # advances week, archives prior
 ~/todo/
   ├─ hacer_config.R           # edit paths/options here
   ├─ this_week/               # live files you edit daily
-  │   ├─ ToDo_YYMMDD_Daily.txt
-  │   ├─ ToDo_YYMMDD_Week.txt
-  │   ├─ ToDo_YYMMDD_Month.txt
-  │   └─ ToDo_YYMMDD_Quarter.txt
+  │   ├─ todo_yymmdd_daily.txt
+  │   ├─ todo_yymmdd_week.txt
+  │   ├─ todo_yymmdd_month.txt
+  │   └─ todo_yymmdd_quarter.txt
   └─ archive/                 # prior weeks (commit/push to GitHub)
 ```
+
+> Pre-0.1.7 repos used capitalized `ToDo_YYMMDD_*.txt` filenames. Readers stay case-insensitive so legacy files keep working — new writes always emit the lowercase form.
 
 ## Editing rules (syntax)
 
@@ -65,7 +67,7 @@ run_monday()                  # advances week, archives prior
 # set the active repo for the session
 hacer::use_repo("~/todo")
 
-# weekly rollover (creates new ToDo_YYMMDD_* in this_week/, archives prior)
+# weekly rollover (creates new todo_yymmdd_* in this_week/, archives prior)
 hacer::run_monday()
 
 # advance to tomorrow's daily section (preserves blank-line groups)
@@ -75,7 +77,7 @@ hacer::next_day()
 hacer::sync_from_daily()
 
 # fix parent statuses in a file you're editing (rolls parents to / or x)
-hacer::fix_parents(file_name = "~/todo/this_week/ToDo_250915_Daily.txt")
+hacer::fix_parents(file_name = "~/todo/this_week/todo_250915_daily.txt")
 
 # day-to-day: copy yesterday forward, drop done non-recurring, log to done.log
 hacer::roll_day()
@@ -93,7 +95,7 @@ hacer's functions work fine as one-shot R calls from any agent that can spawn `R
 ```bash
 HACER_REPO=~/todo r -e 'hacer::run_monday()'
 HACER_REPO=~/todo r -e 'hacer::next_day()'
-HACER_REPO=~/todo r -e 'hacer::fix_parents("~/todo/this_week/ToDo_250915_Daily.txt")'
+HACER_REPO=~/todo r -e 'hacer::fix_parents("~/todo/this_week/todo_250915_daily.txt")'
 ```
 
 Resolution order for the repo path is: `repo_dir` argument → `options("hacer.repo")` → `HACER_REPO` env var → `tools::R_user_dir("hacer", "data")`. The env var makes the "stateless one-shot" case ergonomic. The `R_user_dir()` fallback is CRAN-safe but ugly (`~/.local/share/R/hacer/` on Linux), so most users `instantiate_todo("~/todo")` and persist `use_repo("~/todo")` in `~/.Rprofile`.
@@ -109,7 +111,7 @@ pv <- hacer::roll_day(preview = TRUE)
 print(pv)
 #> hacer preview
 #>   created (1):
-#>     + ~/todo/this_week/ToDo_250916_Daily.txt
+#>     + ~/todo/this_week/todo_250916_daily.txt
 #>   done.log appends (2):
 #>     > 2025-09-16  [x] - Some finished task
 #>     > 2025-09-16    [x] - A nested done item
@@ -132,7 +134,7 @@ Covers `roll_day()`, `run_monday()`, `fix_parents()`, `next_day()`, `sync_from_d
 tasks()                          # everything across all four cadences
 tasks(status = "in_progress")    # just [/] tasks
 tasks(recurring = TRUE)          # just *-prefixed tasks
-tasks(file = "~/todo/this_week/ToDo_250915_Daily.txt")
+tasks(file = "~/todo/this_week/todo_250915_daily.txt")
 ```
 
 Columns: `id`, `file`, `line`, `depth`, `status`, `recurring`, `text`, `parent_id`. `status` normalizes the bracket symbols to `"todo"`, `"in_progress"`, `"done"`, and `"blocked"`.
@@ -151,7 +153,7 @@ To get your repos tracked: add them to your todo files (any cadence) and ensure 
 
 ## Weekly routine (Mon AM)
 
-1. Open `~/todo/this_week/ToDo_YYMMDD_Daily.txt` and plan the week/day.
+1. Open `~/todo/this_week/todo_yymmdd_daily.txt` and plan the week/day.
 2. `run_monday()` to advance periods and archive last week.
 3. `git -C ~/todo add archive && git -C ~/todo commit -m "Archive week" && git -C ~/todo push`.
 

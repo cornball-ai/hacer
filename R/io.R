@@ -29,10 +29,11 @@ write_todo_txt <- function(df, file, period, cfg = todo_config()) {
   for (i in seq_len(nrow(df))) {
     pad <- paste(rep(" ", df$level[i] * indent), collapse = "")
     stat <- paste0("[", df$status[i], "]")
-    dash <- " -"
-    nm <- df$name[i]
-    if (isTRUE(df$recur[i])) nm <- paste0("*", nm)
-    out[i] <- paste0(pad, stat, " ", dash, " ", nm)
+    if (isTRUE(df$recur[i])) {
+      out[i] <- paste0(pad, stat, " -*", df$name[i])
+    } else {
+      out[i] <- paste0(pad, stat, " - ", df$name[i])
+    }
   }
   out
 }

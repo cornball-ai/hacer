@@ -12,7 +12,7 @@ tmp_repo <- function() {
 # ---- Case 1: parse_todo() accepts [!] and reports status = "!" ----
 tmp1 <- tempfile(fileext = ".txt")
 writeLines(c(
-  "# ToDo_250915_Daily.txt",
+  "# todo_250915_daily.txt",
   "",
   "[!] - Blocked one",
   "[ ] - Plain todo"
@@ -26,7 +26,7 @@ unlink(tmp1)
 # ---- Case 2: fix_parents() rolls a parent to [!] when any child is blocked ----
 tmp2 <- tempfile(fileext = ".txt")
 writeLines(c(
-  "# ToDo_250915_Daily.txt",
+  "# todo_250915_daily.txt",
   "",
   "#######################################",
   "",
@@ -46,7 +46,7 @@ unlink(tmp2)
 # ---- Case 3: fix_parents() bubbles [!] up across multiple levels ----
 tmp3 <- tempfile(fileext = ".txt")
 writeLines(c(
-  "# ToDo_250915_Daily.txt",
+  "# todo_250915_daily.txt",
   "",
   "[ ] - Grandparent",
   "  [ ] - Parent",
@@ -65,7 +65,7 @@ unlink(tmp3)
 # ---- Case 4: [!] takes precedence over [x] siblings (would otherwise be done) ----
 tmp4 <- tempfile(fileext = ".txt")
 writeLines(c(
-  "# ToDo_250915_Daily.txt",
+  "# todo_250915_daily.txt",
   "",
   "[ ] - Project",
   "  [x] - Done sibling",
@@ -82,7 +82,7 @@ unlink(tmp4)
 # ---- Case 5: [!] takes precedence over [/] siblings ----
 tmp5 <- tempfile(fileext = ".txt")
 writeLines(c(
-  "# ToDo_250915_Daily.txt",
+  "# todo_250915_daily.txt",
   "",
   "[ ] - Project",
   "  [/] - In progress",
@@ -98,7 +98,7 @@ unlink(tmp5)
 # ---- Case 6: blocked + recurring sibling — parent is [!], recurring orthogonal ----
 tmp6 <- tempfile(fileext = ".txt")
 writeLines(c(
-  "# ToDo_250915_Daily.txt",
+  "# todo_250915_daily.txt",
   "",
   "[ ] - Project",
   "  [ ] -*Recurring child",
@@ -106,7 +106,7 @@ writeLines(c(
 ), tmp6)
 hacer::fix_parents(file_name = tmp6)
 out6 <- readLines(tmp6, warn = FALSE)
-parent_line6 <- grep("- (\\*)?Project$", out6, value = TRUE)
+parent_line6 <- grep("-\\s*\\*?Project$", out6, value = TRUE)
 expect_equal(substr(sub("^\\s*", "", parent_line6), 2, 2), "!",
              info = "Recurring sibling does not affect blocked rollup")
 unlink(tmp6)
@@ -114,9 +114,9 @@ unlink(tmp6)
 # ---- Case 7: tasks() reports status = "blocked" for [!] (already covered, sanity check) ----
 repo7 <- tmp_repo()
 cfg7 <- list(live_dir = file.path(repo7, "this_week"), indent = 2L)
-f7 <- file.path(cfg7$live_dir, "ToDo_250915_Daily.txt")
+f7 <- file.path(cfg7$live_dir, "todo_250915_daily.txt")
 writeLines(c(
-  "# ToDo_250915_Daily.txt",
+  "# todo_250915_daily.txt",
   "",
   "[!] - Blocked"
 ), f7)
@@ -134,7 +134,7 @@ cfg8 <- list(
   indent = 2L,
   live_dir = file.path(repo8, "this_week"),
   archive_dir = file.path(repo8, "archive"),
-  filename_fmt = "ToDo_%y%m%d_%s.txt",
+  filename_fmt = "todo_%y%m%d_%s.txt",
   daily_sections = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday"),
   render_markdown = FALSE,
   render_html = FALSE
@@ -145,9 +145,10 @@ this_mon <- as.Date("2025-09-15")
 
 for (p in c("Daily", "Week", "Month", "Quarter")) {
   f <- file.path(cfg8$live_dir,
-                 sprintf("ToDo_%s_%s.txt", format(prev_mon, "%y%m%d"), p))
+                 sprintf("todo_%s_%s.txt",
+                         format(prev_mon, "%y%m%d"), tolower(p)))
   writeLines(c(
-    paste0("# ToDo_", format(prev_mon, "%y%m%d"), "_", p, ".txt"),
+    paste0("# todo_", format(prev_mon, "%y%m%d"), "_", tolower(p), ".txt"),
     "",
     "#######################################",
     "",
@@ -161,7 +162,8 @@ hacer::run_monday(date = this_mon, cfg = cfg8)
 
 for (p in c("Daily", "Week", "Month", "Quarter")) {
   f <- file.path(cfg8$live_dir,
-                 sprintf("ToDo_%s_%s.txt", format(this_mon, "%y%m%d"), p))
+                 sprintf("todo_%s_%s.txt",
+                         format(this_mon, "%y%m%d"), tolower(p)))
   expect_true(file.exists(f),
               info = paste("run_monday creates new", p, "file"))
   out <- readLines(f, warn = FALSE)
@@ -174,15 +176,15 @@ unlink(repo8, recursive = TRUE)
 # ---- Case 9: roll_day() preserves [!] (sanity duplicate of test_roll_day Case 4) ----
 repo9 <- tmp_repo()
 cfg9 <- list(live_dir = file.path(repo9, "this_week"), indent = 2L)
-f9 <- file.path(cfg9$live_dir, "ToDo_250915_Daily.txt")
+f9 <- file.path(cfg9$live_dir, "todo_250915_daily.txt")
 writeLines(c(
-  "# ToDo_250915_Daily.txt",
+  "# todo_250915_daily.txt",
   "",
   "[!] - Blocked",
   "  [!] - Blocked nested"
 ), f9)
 hacer::roll_day(date = as.Date("2025-09-16"), cfg = cfg9)
-out9 <- readLines(file.path(cfg9$live_dir, "ToDo_250916_Daily.txt"),
+out9 <- readLines(file.path(cfg9$live_dir, "todo_250916_daily.txt"),
                   warn = FALSE)
 expect_true(any(grepl("\\[!\\] - Blocked$", out9)),
             info = "roll_day preserves top-level [!]")
