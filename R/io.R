@@ -7,12 +7,12 @@ build_todo_txt_lines <- function(df, file, period, cfg = todo_config()) {
     secs <- unique(df$section)
     secs <- secs[!is.na(secs)]
     for (s in secs) {
-      lines <- c(lines, "", "#######################################", paste0("\n# ", s), "")
+      lines <- c(lines, "", paste0("## ", s), "")
       part <- df[df$section == s, , drop=FALSE]
       lines <- c(lines, .df_to_lines(part, cfg$indent))
     }
   } else {
-    lines <- c(lines, "", "#######################################", "")
+    lines <- c(lines, "")
     lines <- c(lines, .df_to_lines(df, cfg$indent))
   }
   lines
@@ -29,11 +29,7 @@ write_todo_txt <- function(df, file, period, cfg = todo_config()) {
   for (i in seq_len(nrow(df))) {
     pad <- paste(rep(" ", df$level[i] * indent), collapse = "")
     stat <- paste0("[", df$status[i], "]")
-    if (isTRUE(df$recur[i])) {
-      out[i] <- paste0(pad, stat, " -*", df$name[i])
-    } else {
-      out[i] <- paste0(pad, stat, " - ", df$name[i])
-    }
+    out[i] <- paste0(pad, "- ", stat, " ", df$name[i])
   }
   out
 }
