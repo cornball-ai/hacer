@@ -179,6 +179,38 @@ expect_true(grepl("One-off in progress", combined),
 
 unlink(repo, recursive = TRUE)
 
+# ---- Writer inserts blank lines between top-level groups ----
+# Flat top-level items cluster together; project containers (with children)
+# get blank-line breathing room before them and after their subtrees.
+df_blank <- data.frame(
+  id = c("A", "B", "C", "D", "D > D1", "E", "F"),
+  parent_id = c(NA, NA, NA, NA, "D", NA, NA),
+  period = "Daily", section = "Monday",
+  name = c("A", "B", "C", "D", "D1", "E", "F"),
+  recur = FALSE, status = " ",
+  level = c(0L, 0L, 0L, 0L, 1L, 0L, 0L),
+  order = 1:7,
+  path = c("A", "B", "C", "D", "D > D1", "E", "F"),
+  stringsAsFactors = FALSE
+)
+out_blank <- hacer:::.df_to_lines(df_blank, indent = 2L)
+# Expect: A, B, C are flat top-level (no blanks). D heads a subtree → blank
+# before. D1 is a child. E follows a deeper descendant (D1) → blank before.
+# F is flat after E (E has no descendants, F has no descendants) → no blank.
+expect_true("" %in% out_blank,
+            info = "Writer inserts blank lines between groups")
+# Find the indices of A and D in the output
+a_idx <- which(out_blank == "- [ ] A")
+d_idx <- which(out_blank == "- [ ] D")
+expect_true(out_blank[d_idx - 1L] == "",
+            info = "Blank line precedes D (which has a child)")
+e_idx <- which(out_blank == "- [ ] E")
+expect_true(out_blank[e_idx - 1L] == "",
+            info = "Blank line precedes E (follows a deeper descendant)")
+b_idx <- which(out_blank == "- [ ] B")
+expect_false(out_blank[b_idx - 1L] == "",
+             info = "No blank between flat top-level A and B")
+
 # ---- Materialization is depth-first preorder (children stay with parents) ----
 rec_dfs <- read_recurring(tmp_dfs <- {
   f <- tempfile()
