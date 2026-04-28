@@ -179,6 +179,27 @@ expect_true(grepl("One-off in progress", combined),
 
 unlink(repo, recursive = TRUE)
 
+# ---- Materialization is depth-first preorder (children stay with parents) ----
+rec_dfs <- read_recurring(tmp_dfs <- {
+  f <- tempfile()
+  writeLines(c(
+    "M       Alpha",
+    "M       cornball.ai",
+    "M       House",
+    "M       cornball.ai > Lil Casey > Countdown"
+  ), f)
+  f
+})
+expanded <- hacer:::.expand_recurring(rec_dfs, "Daily", "Monday", 1L)
+# Order should be Alpha, cornball.ai, Lil Casey, Countdown, House — children
+# of cornball.ai must come *before* House so the rendered indentation puts
+# them under cornball.ai, not under House.
+expect_equal(expanded$path,
+             c("Alpha", "cornball.ai", "cornball.ai > Lil Casey",
+               "cornball.ai > Lil Casey > Countdown", "House"),
+             info = "Materializer emits depth-first preorder")
+unlink(tmp_dfs)
+
 # ---- instantiate_todo writes recurring.txt ----
 repo2 <- tempfile()
 hacer::instantiate_todo(repo2)

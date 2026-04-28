@@ -134,6 +134,11 @@ read_recurring <- function(path) {
 # Expand a manifest subset into a parse_todo-shaped data.frame for one
 # section. Ancestors of nested paths are auto-emitted as recurring containers
 # so the tree is well-formed.
+#
+# Output order is depth-first preorder, with siblings ranked by their first
+# appearance in the manifest. This ensures `cornball.ai > Lil Casey >
+# Countdown` is rendered as nested children of cornball.ai, not as a
+# downstream sibling of House.
 .expand_recurring <- function(rec_subset, period, section, start_order = 1L) {
   schema_empty <- function() {
     data.frame(
@@ -145,28 +150,54 @@ read_recurring <- function(path) {
   }
   if (!nrow(rec_subset)) return(schema_empty())
 
-  rows <- list()
-  emitted <- character()
-  ord <- start_order - 1L
-
+  # Collect every path (declared + ancestors) with first-seen manifest position
+  all_paths <- character()
+  position  <- integer()
   for (i in seq_len(nrow(rec_subset))) {
     parts <- strsplit(rec_subset$path[i], " > ", fixed = TRUE)[[1]]
-    cur <- character()
     for (j in seq_along(parts)) {
-      cur <- c(cur, parts[j])
-      pth <- paste(cur, collapse = " > ")
-      if (pth %in% emitted) next
-      ord <- ord + 1L
-      parent <- if (j == 1L) NA_character_
-                else paste(cur[-length(cur)], collapse = " > ")
-      rows[[length(rows) + 1L]] <- data.frame(
-        id = pth, parent_id = parent,
-        period = period, section = section,
-        name = parts[j], recur = TRUE, status = " ",
-        level = j - 1L, order = ord, path = pth,
-        stringsAsFactors = FALSE)
-      emitted <- c(emitted, pth)
+      pth <- paste(parts[seq_len(j)], collapse = " > ")
+      if (!(pth %in% all_paths)) {
+        all_paths <- c(all_paths, pth)
+        position  <- c(position,  i)
+      }
     }
+  }
+  parent_of <- vapply(all_paths, function(p) {
+    parts <- strsplit(p, " > ", fixed = TRUE)[[1]]
+    if (length(parts) == 1L) NA_character_
+    else paste(parts[-length(parts)], collapse = " > ")
+  }, character(1L))
+
+  # DFS preorder starting from each root, siblings ordered by manifest position
+  visit_order <- character()
+  visit <- function(node) {
+    visit_order[[length(visit_order) + 1L]] <<- node
+    children <- all_paths[!is.na(parent_of) & parent_of == node]
+    if (length(children) > 1L) {
+      children <- children[order(position[match(children, all_paths)])]
+    }
+    for (ch in children) visit(ch)
+  }
+  roots <- all_paths[is.na(parent_of)]
+  if (length(roots) > 1L) {
+    roots <- roots[order(position[match(roots, all_paths)])]
+  }
+  for (r in roots) visit(r)
+
+  rows <- list()
+  ord <- start_order - 1L
+  for (pth in visit_order) {
+    parts <- strsplit(pth, " > ", fixed = TRUE)[[1]]
+    parent <- parent_of[match(pth, all_paths)]
+    ord <- ord + 1L
+    rows[[length(rows) + 1L]] <- data.frame(
+      id = pth, parent_id = parent,
+      period = period, section = section,
+      name = parts[length(parts)],
+      recur = TRUE, status = " ",
+      level = length(parts) - 1L, order = ord, path = pth,
+      stringsAsFactors = FALSE)
   }
   do.call(rbind, rows)
 }

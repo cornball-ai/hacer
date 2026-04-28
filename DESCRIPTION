@@ -1,6 +1,6 @@
 Package: hacer
 Title: Plain-Text Nested ToDo Planning
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: c(
     person("Troy", "Hernandez", role = c("aut", "cre"),
            email = "troy@cornball.ai",
