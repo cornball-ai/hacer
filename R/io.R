@@ -25,11 +25,26 @@ write_todo_txt <- function(df, file, period, cfg = todo_config()) {
 .df_to_lines <- function(df, indent) {
   if (!nrow(df)) return(character())
   df <- df[order(df$order), , drop=FALSE]
-  out <- character(nrow(df))
+
+  has_descendants <- function(i) {
+    if (i == nrow(df)) return(FALSE)
+    df$level[i + 1L] > df$level[i]
+  }
+
+  out <- character()
   for (i in seq_len(nrow(df))) {
+    # Insert a blank line before this row when:
+    # - it's not the first row, AND it's at depth 0, AND
+    #   either it heads a subtree, or the previous row was a deeper descendant.
+    # That keeps flat top-level items clustered and visually separates them
+    # from project containers and their subtrees.
+    if (i > 1L && df$level[i] == 0L &&
+        (has_descendants(i) || df$level[i - 1L] > 0L)) {
+      out <- c(out, "")
+    }
     pad <- paste(rep(" ", df$level[i] * indent), collapse = "")
     stat <- paste0("[", df$status[i], "]")
-    out[i] <- paste0(pad, "- ", stat, " ", df$name[i])
+    out <- c(out, paste0(pad, "- ", stat, " ", df$name[i]))
   }
   out
 }
