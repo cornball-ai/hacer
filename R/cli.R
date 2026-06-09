@@ -215,8 +215,8 @@ next_day <- function(date = Sys.Date(), cfg = todo_config(),
   }
   tomorrow_name <- days[today_idx + 1L]
 
-  section_starts <- grep("^#\\s+\\w", lines)
-  section_names <- sub("^#\\s+", "", lines[section_starts])
+  section_starts <- grep("^#+\\s+\\w", lines)
+  section_names <- sub("^#+\\s+", "", lines[section_starts])
 
   today_start <- section_starts[match(today_name, section_names)]
   tomorrow_start <- section_starts[match(tomorrow_name, section_names)]

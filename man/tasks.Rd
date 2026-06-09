@@ -38,6 +38,9 @@ A `data.frame` with columns:
 \description{
 Parses one or more ToDo files into a `data.frame` so agents and ad-hoc R
 sessions can filter and reason about tasks without re-parsing text.
+}
+\details{
 IDs are ephemeral: deterministic for a given parse, but they shift when
 lines are inserted or removed. Don't persist them across edits.
+
 }

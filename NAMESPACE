@@ -1,6 +1,7 @@
 # tinyrox says don't edit this manually, but it can't stop you!
 
 export(advance_period)
+export(catch_up)
 export(check_setup)
 export(fix_parents)
 export(infer_period_from_filename)

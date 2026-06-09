@@ -16,10 +16,14 @@ Walks `cfg$live_dir` for `.txt` files matching the `todo_*` pattern,
 reads each via the dual-format parser, writes a `.md` companion in the
 new markdown task-list syntax (`- [X] text`), and removes the `.txt`
 source after a successful write.
+}
+\details{
 Surfaces a warning listing any tasks that carried the legacy `*`
 recurring marker — the new writer drops `*` entirely, so add those
 paths to `recurring.txt` if you want them to keep recurring.
+
 Archive files are not touched. If you want them migrated, do it
 manually with `git mv` + a script — or wait until the question matters
 enough to dial the defaults in.
+
 }
