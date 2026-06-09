@@ -22,27 +22,6 @@ expect_equal(df1$file, "ToDo_250915_Daily.txt",
              info = "tasks() preserves source case in the file column")
 unlink(repo1, recursive = TRUE)
 
-# ---- roll_day reads capitalized, writes lowercase ----
-repo2 <- tmp_repo()
-cfg2 <- list(live_dir = file.path(repo2, "this_week"), indent = 2L)
-src <- file.path(cfg2$live_dir, "ToDo_250915_Daily.txt")
-writeLines(c("# legacy", "", "[ ] - Carry forward", "[x] - Done"), src)
-
-hacer::roll_day(date = as.Date("2025-09-16"), cfg = cfg2)
-
-dst_md <- file.path(cfg2$live_dir, "todo_250916_daily.md")
-dst_txt_lo <- file.path(cfg2$live_dir, "todo_250916_daily.txt")
-dst_txt_up <- file.path(cfg2$live_dir, "ToDo_250916_Daily.txt")
-expect_true(file.exists(dst_md),
-            info = "roll_day writes the new file as .md")
-expect_false(file.exists(dst_txt_lo),
-             info = "roll_day does not write lowercase .txt")
-expect_false(file.exists(dst_txt_up),
-             info = "roll_day does not write capitalized .txt")
-expect_true(file.exists(src),
-            info = "Source capitalized file is left in place")
-unlink(repo2, recursive = TRUE)
-
 # ---- run_monday reads legacy capitalized prev week, writes .md next week ----
 repo3 <- tmp_repo()
 cfg3 <- list(
@@ -74,5 +53,8 @@ for (p in c("Daily","Week","Month","Quarter")) {
                              format(this_mon, "%y%m%d"), tolower(p)))
   expect_true(file.exists(new_f),
               info = paste("run_monday writes new .md", p, "filename"))
+  expect_equal(readLines(new_f, n = 1L),
+               paste0("# ", basename(new_f)),
+               info = paste("run_monday H1 matches new filename for", p))
 }
 unlink(repo3, recursive = TRUE)

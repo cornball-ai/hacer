@@ -171,22 +171,3 @@ for (p in c("Daily", "Week", "Month", "Quarter")) {
 }
 
 unlink(repo8, recursive = TRUE)
-
-# ---- Case 9: roll_day() preserves [!] (sanity duplicate of test_roll_day Case 4) ----
-repo9 <- tmp_repo()
-cfg9 <- list(live_dir = file.path(repo9, "this_week"), indent = 2L)
-f9 <- file.path(cfg9$live_dir, "todo_250915_daily.md")
-writeLines(c(
-  "# todo_250915_daily.md",
-  "",
-  "- [!] Blocked",
-  "  - [!] Blocked nested"
-), f9)
-hacer::roll_day(date = as.Date("2025-09-16"), cfg = cfg9)
-out9 <- readLines(file.path(cfg9$live_dir, "todo_250916_daily.md"),
-                  warn = FALSE)
-expect_true(any(grepl("\\[!\\] Blocked$", out9)),
-            info = "roll_day preserves top-level [!]")
-expect_true(any(grepl("\\[!\\] Blocked nested$", out9)),
-            info = "roll_day preserves nested [!]")
-unlink(repo9, recursive = TRUE)
