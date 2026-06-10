@@ -2,6 +2,8 @@
 
 Plain-text nested ToDo files in markdown: parse, roll up, and advance.
 
+> **Alpha.** Expect bugs and missing functionality. Feel free to open an issue if you're noticing or missing something specific that's not already tracked.
+
 Edit in any text editor. Run a couple of small helpers. Keep history in git.
 
 ## Install
@@ -69,7 +71,7 @@ Standard markdown task list. Two spaces per indent level:
   - all children `x` → parent `x`
   - any `/` or mix of `x`/`/`/blank → parent `/`
   - all blank → parent blank
-- Blocked is sticky. `roll_day()`, `run_monday()`, and `next_day()` all preserve `[!]` items verbatim until you explicitly change them.
+- Blocked is sticky. `run_monday()` and `next_day()` both preserve `[!]` items verbatim until you explicitly change them.
 
 ## Recurring tasks (`recurring.txt`)
 
@@ -120,9 +122,6 @@ hacer::sync_from_daily()
 # fix parent statuses in a file you're editing (rolls parents to / or x)
 hacer::fix_parents(file_name = "~/todo/this_week/todo_260427_daily.md")
 
-# day-to-day: copy yesterday forward, drop done non-recurring, log to done.log
-hacer::roll_day()
-
 # read everything as a data.frame (parsed from this_week/)
 hacer::tasks()
 
@@ -168,24 +167,21 @@ If you're running [corteza](https://github.com/cornball-ai/corteza)'s MCP server
 Every function that writes to disk takes `preview = TRUE` and returns a `hacer_preview` object describing what would change without touching the filesystem:
 
 ```r
-pv <- hacer::roll_day(preview = TRUE)
+pv <- hacer::next_day(preview = TRUE)
 print(pv)
 #> hacer preview
-#>   created (1):
-#>     + ~/todo/this_week/todo_260428_daily.md
-#>   done.log appends (2):
-#>     > 2026-04-28  - [x] Some finished task
-#>     > 2026-04-28    - [x] A nested done item
+#>   modified (1):
+#>     ~ ~/todo/this_week/todo_260427_daily.md
 ```
 
 Set `HACER_PREVIEW=1` to flip the default for a one-shot CLI agent so it never accidentally writes:
 
 ```bash
 HACER_REPO=~/todo HACER_PREVIEW=1 r -e 'hacer::run_monday()'
-HACER_REPO=~/todo HACER_PREVIEW=1 r -e 'hacer::roll_day()'
+HACER_REPO=~/todo HACER_PREVIEW=1 r -e 'hacer::next_day()'
 ```
 
-Covers `roll_day()`, `run_monday()`, `fix_parents()`, `next_day()`, `sync_from_daily()`, `instantiate_todo()`, and `migrate_to_markdown()`. The preview lists `files_created`, `files_modified`, line-level diffs, and any `done.log` lines that would be appended.
+Covers `run_monday()`, `next_day()`, `fix_parents()`, `sync_from_daily()`, `instantiate_todo()`, and `migrate_to_markdown()`. The preview lists `files_created`, `files_modified`, line-level diffs, and any `done.log` lines that would be appended.
 
 ### Reading: `tasks()` is the structured API
 

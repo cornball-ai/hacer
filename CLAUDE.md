@@ -25,12 +25,11 @@ r -e 'tinypkgr::check()'
 4. `write_todo_txt()` - Write data.frame back to .md format
 
 **Key modules:**
-- `R/parse.R` - Text parsing to data.frame (internal/full schema). `.parse_task_line()` is the dual-format lexer used by `parse_todo`, `roll_day`, `next_day`, and `tasks()`.
+- `R/parse.R` - Text parsing to data.frame (internal/full schema). `.parse_task_line()` is the dual-format lexer used by `parse_todo`, `next_day`, and `tasks()`.
 - `R/tasks.R` - Agent-facing read API (`tasks()`)
 - `R/rollup.R` - Parent status calculation
 - `R/advance.R` - Period advancement logic (weekly/monthly/quarterly rollover)
 - `R/cli.R` - User-facing functions: `run_monday()`, `fix_parents()`, `sync_from_daily()`, `next_day()`
-- `R/roll_day.R` - Day-to-day list rollover (`roll_day()`)
 - `R/recurring.R` - Manifest reader + materializer
 - `R/migrate.R` - One-shot legacy `.txt` → `.md` converter (`migrate_to_markdown()`)
 - `R/io.R` - File I/O (markdown writer, html mirror)
@@ -55,7 +54,7 @@ r -e 'tinypkgr::check()'
 
 ## Preview mode
 
-Every mutator (`roll_day`, `run_monday`, `fix_parents`, `next_day`, `sync_from_daily`, `instantiate_todo`, `migrate_to_markdown`) accepts `preview = TRUE` and returns a `hacer_preview` describing the would-be change without writing. Set `HACER_PREVIEW=1` to flip the default — useful for one-shot agent invocations that should be inspectable before they touch the user's todo repo. Internals live in `R/preview.R`; each mutator builds a `targets` list of `path -> new_lines` and dispatches via `.write_or_preview()`.
+Every mutator (`run_monday`, `fix_parents`, `next_day`, `sync_from_daily`, `instantiate_todo`, `migrate_to_markdown`) accepts `preview = TRUE` and returns a `hacer_preview` describing the would-be change without writing. Set `HACER_PREVIEW=1` to flip the default — useful for one-shot agent invocations that should be inspectable before they touch the user's todo repo. Internals live in `R/preview.R`; each mutator builds a `targets` list of `path -> new_lines` and dispatches via `.write_or_preview()`.
 
 ## Task File Format (0.2.0+)
 
@@ -77,7 +76,7 @@ Every mutator (`roll_day`, `run_monday`, `fix_parents`, `next_day`, `sync_from_d
 
 The dual-format parser still reads pre-0.2.0 files (`[X] - text` syntax in `.txt` files with `# Section` H1 day headers). The writer never emits the legacy format. `migrate_to_markdown()` does a one-shot conversion of the live dir.
 
-- `[!]` is sticky: rollup gives it precedence over all other statuses, and `roll_day()` / `run_monday()` / `next_day()` preserve it verbatim until a human or agent changes it.
+- `[!]` is sticky: rollup gives it precedence over all other statuses, and `run_monday()` / `next_day()` preserve it verbatim until a human or agent changes it.
 
 ## Dependencies
 
