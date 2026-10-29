@@ -1,0 +1,12 @@
+[Unit]
+Description=Snapshot todo.md and archive last week's dated todo files
+
+[Service]
+Type=oneshot
+# Set the repo in a drop-in, e.g. ~/.config/systemd/user/hacer-snapshot.service.d/repo.conf:
+#   [Service]
+#   Environment=HACER_REPO=%h/todo
+# The log directory must exist: mkdir -p ~/.local/state/hacer
+ExecStart=/usr/bin/r -e 'writeLines(paste(format(Sys.time()), "snapshot:", hacer::snapshot()))'
+StandardOutput=append:%h/.local/state/hacer/snapshot.log
+StandardError=append:%h/.local/state/hacer/snapshot.log

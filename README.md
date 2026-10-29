@@ -162,7 +162,24 @@ options(hacer.survey_owners = c("my-org", "my-user"),   # or HACER_SURVEY_OWNERS
         hacer.tasks_dir = "~/tasks")                     # or HACER_TASKS_DIR=~/tasks
 ```
 
-A systemd timer (or cron) for the 2am snapshot:
+A user systemd timer for the 2am snapshot ships with the package. Copy the two units out of `system.file("systemd", package = "hacer")`, point them at your repo with a drop-in, create the log directory, and enable the timer:
+
+```bash
+cp "$(r -e 'cat(system.file("systemd", package = "hacer"))')"/hacer-snapshot.* ~/.config/systemd/user/
+mkdir -p ~/.config/systemd/user/hacer-snapshot.service.d ~/.local/state/hacer
+```
+
+```ini
+# ~/.config/systemd/user/hacer-snapshot.service.d/repo.conf
+[Service]
+Environment=HACER_REPO=%h/todo
+```
+
+```bash
+systemctl --user daemon-reload && systemctl --user enable --now hacer-snapshot.timer
+```
+
+The service appends to `~/.local/state/hacer/snapshot.log`. `Persistent=true` runs a missed night at the next login, and the default `date` is yesterday, so a late run still writes the right file. The shipped unit doesn't commit; change its `ExecStart` to `hacer::snapshot(commit = TRUE)` if the archive's checkout can take the commit. Without systemd, the same thing from cron:
 
 ```bash
 HACER_REPO=~/todo r -e 'hacer::snapshot(commit = TRUE)'

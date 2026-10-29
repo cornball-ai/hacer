@@ -18,6 +18,8 @@
   `options(hacer.survey_owners, hacer.tasks_dir)` or the
   `HACER_SURVEY_OWNERS` / `HACER_TASKS_DIR` environment variables.
 - `hacer_preview` gains a `files_moved` table, shown by `print()`.
+- `inst/systemd/` ships a user timer and service for the nightly snapshot;
+  the repo path comes from a drop-in so the unit stays generic.
 - CI runs on pull requests only, uses the rapt backend and fails on check
   warnings (#17).
 - `mirror_subtree()` syncs a todo subtree across files (#15).
