@@ -3,9 +3,15 @@
 \alias{mirror_subtree}
 \title{Mirror a subtree from one todo file into another}
 \usage{
-mirror_subtree(source_file, target_file, source_path, target_path,
-               period = "Week", conflict = c("source", "target"),
-               preview = .preview_default())
+mirror_subtree(
+  source_file,
+  target_file,
+  source_path,
+  target_path,
+  period = "Week",
+  conflict = c("source", "target"),
+  preview = .preview_default()
+)
 }
 \arguments{
 \item{period}{Character period label passed to \code{\link{parse_todo}}.}

@@ -41,6 +41,34 @@ todo_config <- function(repo_dir = .default_repo_dir()) {
   }
 }
 
+#' Path to the live todo file
+#'
+#' The single-file workflow keeps one hand-edited `todo.md` in `live_dir`.
+#' [snapshot()] copies it to a dated file each day and [survey()] reads it.
+#'
+#' @param cfg A config list from `todo_config()`.
+#' @return The path `<live_dir>/todo.md`. The file need not exist.
+#' @export
+todo_file <- function(cfg = todo_config()) {
+  file.path(cfg$live_dir, "todo.md")
+}
+
+# survey() settings: option > env var > NULL. Nothing user-specific lives in
+# the package; set these in ~/.Rprofile or on the command line.
+.survey_owners <- function() {
+  opt <- getOption("hacer.survey_owners", NULL)
+  if (!is.null(opt)) return(opt)
+  env <- Sys.getenv("HACER_SURVEY_OWNERS", unset = "")
+  if (nzchar(env)) trimws(strsplit(env, ",", fixed = TRUE)[[1]]) else NULL
+}
+
+.tasks_dir <- function() {
+  opt <- getOption("hacer.tasks_dir", NULL)
+  if (!is.null(opt)) return(opt)
+  env <- Sys.getenv("HACER_TASKS_DIR", unset = "")
+  if (nzchar(env)) env else NULL
+}
+
 # Convenience: remember a repo path for this R session.
 #' Remember a repo path for this R session
 #' @param repo_dir Path to your ToDo repo directory.

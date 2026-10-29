@@ -35,6 +35,12 @@
   list(level = level, status = status, recur = recur, name = trimws(rest))
 }
 
+# A `#blocked` tag anywhere in the task text marks the item as blocked.
+# The tag stays in the text; readers expose it as a flag.
+.is_blocked <- function(text) {
+  grepl("(^|\\s)#blocked\\b", text, ignore.case = TRUE, perl = TRUE)
+}
+
 #' Parse a ToDo file into a data.frame
 #'
 #' Accepts both the new markdown task-list format (`- [X] text`) and the

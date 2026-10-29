@@ -9,5 +9,8 @@ rollup_status(df)
 \item{df}{A parsed ToDo data.frame.}
 }
 \description{
-Roll child statuses up to parent tasks
+A parent is `x` when every child is `x`, `/` when any child is `/` or
+`x`, and blank otherwise. `[!]` (important) is a marker on the item
+itself: an important child counts as open for its parent, and an
+important parent keeps its marker until all of its children are done.
 }

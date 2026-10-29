@@ -3,8 +3,12 @@
 \alias{instantiate_todo}
 \title{Create a hacer project layout in a Git repo.}
 \usage{
-instantiate_todo(repo_dir, syncthing_live_dir = NULL, overwrite = FALSE,
-                 preview = .preview_default())
+instantiate_todo(
+  repo_dir,
+  syncthing_live_dir = NULL,
+  overwrite = FALSE,
+  preview = .preview_default()
+)
 }
 \arguments{
 \item{repo_dir}{Path to your ToDo repo directory.}

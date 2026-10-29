@@ -24,14 +24,15 @@ writeLines(c(
   "  [/] - Sub in progress",
   "  [x] - Sub done",
   "[ ] -*Recurring",
-  "[!] - Blocked one"
+  "[!] - Important one"
 ), f1)
 
 df1 <- tasks(cfg = cfg1)
 
 expect_equal(
   names(df1),
-  c("id", "file", "line", "depth", "status", "recurring", "text", "parent_id"),
+  c("id", "file", "line", "depth", "status", "recurring", "blocked", "text",
+    "parent_id"),
   info = "Columns must match the spec exactly and in order"
 )
 expect_true(is.character(df1$id),        info = "id is character")
@@ -40,18 +41,21 @@ expect_true(is.integer(df1$line),        info = "line is integer")
 expect_true(is.integer(df1$depth),       info = "depth is integer")
 expect_true(is.character(df1$status),    info = "status is character")
 expect_true(is.logical(df1$recurring),   info = "recurring is logical")
+expect_true(is.logical(df1$blocked),     info = "blocked is logical")
 expect_true(is.character(df1$text),      info = "text is character")
 expect_true(is.character(df1$parent_id), info = "parent_id is character")
 
 expect_equal(nrow(df1), 5L, info = "Five tasks parsed")
 expect_equal(df1$status,
-             c("todo", "in_progress", "done", "todo", "blocked"),
+             c("todo", "in_progress", "done", "todo", "important"),
              info = "Status mapping for [ ], [/], [x], [!]")
 expect_equal(df1$recurring, c(FALSE, FALSE, FALSE, TRUE, FALSE),
              info = "Recurring flag set only on starred task")
+expect_equal(df1$blocked, rep(FALSE, 5L),
+             info = "No #blocked tags means blocked is all FALSE")
 expect_equal(df1$text,
              c("Top todo", "Sub in progress", "Sub done",
-               "Recurring", "Blocked one"),
+               "Recurring", "Important one"),
              info = "Text strips status, dash, recurring marker")
 expect_equal(df1$file,
              rep("todo_250915_daily.md", 5L),
@@ -118,28 +122,31 @@ writeLines(c(
   "[ ] - todo a",
   "[/] - in progress a",
   "[x] - done a",
-  "[!] - blocked a",
+  "[!] - important a",
   "[ ] -*recurring a",
-  "[x] -*recurring done"
+  "[x] -*recurring done",
+  "[ ] - waiting on vendor #blocked"
 ), f3)
 
 # status filter
-expect_equal(nrow(tasks(cfg = cfg3, status = "todo")), 2L,
-             info = "status='todo' returns the two [ ] rows")
-expect_equal(nrow(tasks(cfg = cfg3, status = c("done", "blocked"))), 3L,
+expect_equal(nrow(tasks(cfg = cfg3, status = "todo")), 3L,
+             info = "status='todo' returns the three [ ] rows")
+expect_equal(nrow(tasks(cfg = cfg3, status = c("done", "important"))), 3L,
              info = "Vector status filter unions matches")
 
 # recurring filter
 expect_equal(nrow(tasks(cfg = cfg3, recurring = TRUE)), 2L,
              info = "recurring=TRUE returns the two starred rows")
-expect_equal(nrow(tasks(cfg = cfg3, recurring = FALSE)), 4L,
-             info = "recurring=FALSE returns the four non-starred rows")
+expect_equal(nrow(tasks(cfg = cfg3, recurring = FALSE)), 5L,
+             info = "recurring=FALSE returns the five non-starred rows")
 
-# blocked convenience
+# blocked filter
 expect_equal(nrow(tasks(cfg = cfg3, blocked = TRUE)), 1L,
-             info = "blocked=TRUE returns the one [!] row")
-expect_equal(nrow(tasks(cfg = cfg3, blocked = FALSE)), 5L,
+             info = "blocked=TRUE returns the one #blocked row")
+expect_equal(nrow(tasks(cfg = cfg3, blocked = FALSE)), 6L,
              info = "blocked=FALSE returns everything else")
+expect_equal(nrow(tasks(cfg = cfg3, status = "todo", blocked = TRUE)), 1L,
+             info = "status + blocked intersect")
 
 # Combined filters intersect
 expect_equal(
@@ -188,7 +195,8 @@ df5 <- tasks(cfg = cfg5)
 expect_equal(nrow(df5), 0L, info = "Empty live_dir returns zero-row data.frame")
 expect_equal(
   names(df5),
-  c("id", "file", "line", "depth", "status", "recurring", "text", "parent_id"),
+  c("id", "file", "line", "depth", "status", "recurring", "blocked", "text",
+    "parent_id"),
   info = "Empty result still has the full column set"
 )
 
@@ -220,3 +228,19 @@ expect_true(grepl(":L3$", df7$id[1]), info = "id encodes the line number")
 expect_true(grepl(":L5$", df7$id[2]), info = "id encodes the line number")
 
 unlink(repo7, recursive = TRUE)
+
+# ---- Case 8: todo.md is read alongside the period files ----
+repo8 <- tmp_repo()
+cfg8 <- list(live_dir = file.path(repo8, "this_week"), indent = 2L)
+writeLines(c("- [ ] From the single file"), file.path(cfg8$live_dir, "todo.md"))
+writeLines(c("# todo_250915_daily.md", "", "- [ ] From daily"),
+           file.path(cfg8$live_dir, "todo_250915_daily.md"))
+writeLines(c("- [ ] Snapshot, not live"),
+           file.path(cfg8$live_dir, "todo_250914.md"))
+
+df8 <- tasks(cfg = cfg8)
+expect_true(setequal(df8$file, c("todo.md", "todo_250915_daily.md")),
+            info = "todo.md and period files are read; dated snapshots are not")
+expect_equal(df8$text[df8$file == "todo.md"], "From the single file")
+
+unlink(repo8, recursive = TRUE)

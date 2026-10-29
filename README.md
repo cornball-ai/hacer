@@ -42,6 +42,8 @@ run_monday()                  # advances week, archives prior
   └─ archive/                 # prior weeks (commit/push to GitHub)
 ```
 
+Prefer one list to four? See [Single-file workflow](#single-file-workflow): a hand-edited `this_week/todo.md`, a dated snapshot per day, and the same `archive/`.
+
 > Pre-0.2.0 repos used `[X] - text` syntax in `.txt` files. Readers still understand both formats during transition; new writes always emit standard markdown task lists in `.md`. Run `migrate_to_markdown()` to convert your live files in one shot.
 
 ## Editing rules (syntax)
@@ -56,22 +58,24 @@ Standard markdown task list. Two spaces per indent level:
 - [ ] House
   - [/] Drywall
   - [x] Trim
-- [!] Permit blocked on city review
+- [!] Permit renewal
+- [ ] Deck quote #blocked on city review
 
 ## Tuesday
 
 - [ ] CO2
 ```
 
-- Status: `[ ]` = todo, `[/]` = in progress, `[x]` = done, `[!]` = blocked (attention needed). `[x]` and `[ ]` are vanilla markdown; `[/]` and `[!]` are custom states (Obsidian renders them, GitHub falls back to plain text).
+- Status: `[ ]` = todo, `[/]` = in progress, `[x]` = done, `[!]` = important. `[x]` and `[ ]` are vanilla markdown; `[/]` and `[!]` are custom states (Obsidian renders them, GitHub falls back to plain text).
+- Blocked is a tag, not a status: put `#blocked` anywhere in the item text. `tasks()` exposes it as a logical column and `survey()` ranks it first.
 - Day sections in Daily are H2 headers (`## Monday`).
 - Recurring tasks live in `recurring.txt`, not as inline `*` markers in the file. The pre-0.2.0 `*` marker is still parsed (so legacy files keep working) but the writer never emits it.
 - Parents auto-roll:
-  - any child `[!]` → parent `[!]` (blocked bubbles up; takes precedence)
   - all children `x` → parent `x`
   - any `/` or mix of `x`/`/`/blank → parent `/`
   - all blank → parent blank
-- Blocked is sticky. `run_monday()` and `next_day()` both preserve `[!]` items verbatim until you explicitly change them.
+  - `[!]` stays on its own item: an important child counts as blank for its parent, and an important parent keeps `[!]` until all its children are done
+- Important is sticky. `run_monday()` and `next_day()` both preserve `[!]` items verbatim until you explicitly change them.
 
 ## Recurring tasks (`recurring.txt`)
 
@@ -125,11 +129,46 @@ hacer::fix_parents(file_name = "~/todo/this_week/todo_260427_daily.md")
 # read everything as a data.frame (parsed from this_week/)
 hacer::tasks()
 
+# rank what needs attention: todo items, git, open PRs, recent notes
+hacer::survey()
+
 # convert legacy .txt files to .md (one-shot)
 hacer::migrate_to_markdown()
 ```
 
 > Tip: add `use_repo("~/todo")` to `~/.Rprofile` so you don't need to call it each session.
+
+## Single-file workflow
+
+If four cadence files are more than you want, keep one list: `this_week/todo.md`, edited by hand and copied forward day to day. hacer stays read-only on it and adds two things around it.
+
+```
+~/todo/
+  ├─ this_week/
+  │   ├─ todo.md              # live, you edit this
+  │   ├─ todo_261026.md       # snapshots, this week only
+  │   └─ todo_261027.md
+  └─ archive/                 # dated files from earlier weeks
+```
+
+- `snapshot()` copies `todo.md` to `todo_yymmdd.md`, dated the day it captures. Run it from an early-morning timer: a 2am run on Oct 29 writes `todo_261028.md`. It never overwrites an existing snapshot unless you pass `overwrite = TRUE`, and it is a plain file copy, so the list survives a machine that doesn't come back.
+- The same call sweeps dated files from before this week's Monday into `archive/` (`archive_old()` does only that). With `commit = TRUE` the moved files are staged and committed in whatever git repo contains the archive; nothing else is staged. `push = TRUE` pushes afterwards.
+- `survey()` reads `todo.md`, scans the git repos directly under `~` whose `origin` belongs to you, asks `gh` for open PRs, and lists notes changed in the last 3 days. It returns one data.frame ranked 1 (attention now: `[!]`, `#blocked`, uncommitted work on an active repo), 2 (in flight: `[/]`, recent commits, unpushed branches, open PRs, fresh notes) and 3 (on the list, idle). Presentation is up to the caller.
+
+Tell `survey()` what counts as yours once, in `~/.Rprofile` or the environment:
+
+```r
+options(hacer.survey_owners = c("my-org", "my-user"),   # or HACER_SURVEY_OWNERS=my-org,my-user
+        hacer.tasks_dir = "~/tasks")                     # or HACER_TASKS_DIR=~/tasks
+```
+
+A systemd timer (or cron) for the 2am snapshot:
+
+```bash
+HACER_REPO=~/todo r -e 'hacer::snapshot(commit = TRUE)'
+```
+
+`snapshot()` and `archive_old()` take `preview = TRUE` like every other mutator; the preview lists the copy and the moves without touching anything.
 
 ## Migrating from pre-0.2.0
 
@@ -181,20 +220,21 @@ HACER_REPO=~/todo HACER_PREVIEW=1 r -e 'hacer::run_monday()'
 HACER_REPO=~/todo HACER_PREVIEW=1 r -e 'hacer::next_day()'
 ```
 
-Covers `run_monday()`, `next_day()`, `fix_parents()`, `sync_from_daily()`, `instantiate_todo()`, and `migrate_to_markdown()`. The preview lists `files_created`, `files_modified`, line-level diffs, and any `done.log` lines that would be appended.
+Covers `run_monday()`, `next_day()`, `fix_parents()`, `sync_from_daily()`, `instantiate_todo()`, `migrate_to_markdown()`, `snapshot()`, and `archive_old()`. The preview lists `files_created`, `files_modified`, `files_moved`, line-level diffs, and any `done.log` lines that would be appended.
 
 ### Reading: `tasks()` is the structured API
 
-`hacer::tasks()` is the read interface for agents. It returns the entire task set across `this_week/` as a `data.frame` so you can filter and reason without re-parsing text:
+`hacer::tasks()` is the read interface for agents. It returns the entire task set across `this_week/` (`todo.md` plus the cadence files) as a `data.frame` so you can filter and reason without re-parsing text:
 
 ```r
-tasks()                          # everything across all four cadences
+tasks()                          # everything in this_week/
 tasks(status = "in_progress")    # just [/] tasks
+tasks(blocked = TRUE)            # just #blocked tasks
 tasks(recurring = TRUE)          # just tasks materialized from recurring.txt
 tasks(file = "~/todo/this_week/todo_260427_daily.md")
 ```
 
-Columns: `id`, `file`, `line`, `depth`, `status`, `recurring`, `text`, `parent_id`. `status` normalizes the bracket symbols to `"todo"`, `"in_progress"`, `"done"`, and `"blocked"`.
+Columns: `id`, `file`, `line`, `depth`, `status`, `recurring`, `blocked`, `text`, `parent_id`. `status` normalizes the bracket symbols to `"todo"`, `"in_progress"`, `"done"`, and `"important"`; `blocked` is `TRUE` when the text carries a `#blocked` tag.
 
 IDs are **ephemeral** (`<basename>:L<line>`). They're stable across re-parses of an unchanged file but shift the moment a line is inserted or removed. Don't persist them across edits — re-call `tasks()` and rebuild your view.
 

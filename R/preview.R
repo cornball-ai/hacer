@@ -13,10 +13,15 @@
              stringsAsFactors = FALSE)
 }
 
+.empty_moves_df <- function() {
+  data.frame(from = character(), to = character(), stringsAsFactors = FALSE)
+}
+
 .new_preview <- function() {
   obj <- list(
     files_created    = character(),
     files_modified   = character(),
+    files_moved      = .empty_moves_df(),
     lines_added      = .empty_diff_df(),
     lines_removed    = .empty_diff_df(),
     done_log_appends = character()
@@ -165,12 +170,20 @@ print.hacer_preview <- function(x, ...) {
       cat("    ~ ", f, " (+", n_add, "/-", n_rm, ")\n", sep = "")
     }
   }
+  n_moved <- if (is.null(x$files_moved)) 0L else nrow(x$files_moved)
+  if (n_moved) {
+    cat("  moved (", n_moved, "):\n", sep = "")
+    for (i in seq_len(n_moved)) {
+      cat("    > ", x$files_moved$from[i], " -> ", x$files_moved$to[i],
+          "\n", sep = "")
+    }
+  }
   if (length(x$done_log_appends)) {
     cat("  done.log appends (", length(x$done_log_appends), "):\n", sep = "")
     for (ln in x$done_log_appends) cat("    > ", ln, "\n", sep = "")
   }
   if (!length(x$files_created) && !length(x$files_modified) &&
-      !length(x$done_log_appends)) {
+      !n_moved && !length(x$done_log_appends)) {
     cat("  (no changes)\n")
   }
   invisible(x)
