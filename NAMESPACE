@@ -1,6 +1,7 @@
 # tinyrox says don't edit this manually, but it can't stop you!
 
 export(advance_period)
+export(archive_old)
 export(catch_up)
 export(check_setup)
 export(fix_parents)
@@ -17,9 +18,12 @@ export(propagate_from_daily)
 export(read_recurring)
 export(rollup_status)
 export(run_monday)
+export(snapshot)
+export(survey)
 export(sync_from_daily)
 export(tasks)
 export(todo_config)
+export(todo_file)
 export(use_repo)
 
 S3method(print,hacer_preview)

@@ -1,6 +1,6 @@
 # R/propagate.R
 # Priority order: " " < "/" < "x" < "!"
-# "!" wins so a blocked task in Daily propagates to the matching task in
+# "!" wins so an important marker set in Daily reaches the matching task in
 # Week/Month/Quarter rather than getting overwritten.
 .pmax_status <- function(a, b) {
   map <- c(" " = 0L, "/" = 1L, "x" = 2L, "!" = 3L)

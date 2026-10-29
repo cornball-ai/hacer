@@ -8,13 +8,14 @@
 #' lines are inserted or removed. Don't persist them across edits.
 #'
 #' @param file Path to a single file, a character vector of paths, or `NULL`
-#'   (default) to parse every `ToDo_*.txt` in `cfg$live_dir`.
+#'   (default) to parse `todo.md` (if present) and every
+#'   `todo_<yymmdd>_<period>.md` in `cfg$live_dir`.
 #' @param status Optional filter. One or more of `"todo"`, `"in_progress"`,
-#'   `"done"`, `"blocked"`.
+#'   `"done"`, `"important"`.
 #' @param recurring Optional logical filter. Keep only recurring (`TRUE`) or
 #'   non-recurring (`FALSE`) tasks.
-#' @param blocked Optional logical filter. Convenience for
-#'   `status = "blocked"`. Combines (intersects) with `status` if both given.
+#' @param blocked Optional logical filter on the `blocked` column (items
+#'   tagged `#blocked`). Combines (intersects) with `status` if both given.
 #' @param cfg Config list from [todo_config()]. Used to resolve `live_dir`
 #'   and `indent` when `file = NULL`.
 #'
@@ -24,8 +25,9 @@
 #'   \item{file}{character, source file basename (not full path)}
 #'   \item{line}{integer, 1-indexed line number in the source file}
 #'   \item{depth}{integer, 0 = root, +1 per indent level}
-#'   \item{status}{character, one of `"todo"`, `"in_progress"`, `"done"`, `"blocked"`}
+#'   \item{status}{character, one of `"todo"`, `"in_progress"`, `"done"`, `"important"`}
 #'   \item{recurring}{logical, `TRUE` if the task has the `*` prefix}
+#'   \item{blocked}{logical, `TRUE` if the text carries a `#blocked` tag}
 #'   \item{text}{character, task text with status brackets and `-`/`*` prefixes stripped}
 #'   \item{parent_id}{character, `id` of nearest ancestor with lower depth, or `NA` for root tasks}
 #' }
@@ -36,10 +38,12 @@ tasks <- function(file = NULL,
                   blocked = NULL,
                   cfg = todo_config()) {
   files <- if (is.null(file)) {
-    list.files(cfg$live_dir,
-               pattern = "^todo_\\d{6}_.+\\.(md|txt)$",
-               full.names = TRUE,
-               ignore.case = TRUE)
+    period <- list.files(cfg$live_dir,
+                         pattern = "^todo_\\d{6}_.+\\.(md|txt)$",
+                         full.names = TRUE,
+                         ignore.case = TRUE)
+    single <- todo_file(cfg)
+    c(if (file.exists(single)) single, period)
   } else {
     nm <- path.expand(file)
     miss <- nm[!file.exists(nm)]
@@ -56,7 +60,7 @@ tasks <- function(file = NULL,
 
   if (!is.null(status))    df <- df[df$status %in% status, , drop = FALSE]
   if (!is.null(recurring)) df <- df[df$recurring %in% recurring, , drop = FALSE]
-  if (!is.null(blocked))   df <- df[(df$status == "blocked") == blocked, , drop = FALSE]
+  if (!is.null(blocked))   df <- df[df$blocked %in% blocked, , drop = FALSE]
 
   rownames(df) <- NULL
   df
@@ -70,6 +74,7 @@ tasks <- function(file = NULL,
     depth     = integer(),
     status    = character(),
     recurring = logical(),
+    blocked   = logical(),
     text      = character(),
     parent_id = character(),
     stringsAsFactors = FALSE
@@ -83,7 +88,7 @@ tasks <- function(file = NULL,
   if (!length(lines)) return(.empty_tasks_df())
 
   status_map <- c(" " = "todo", "/" = "in_progress",
-                  "x" = "done", "!" = "blocked")
+                  "x" = "done", "!" = "important")
 
   is_task    <- logical(length(lines))
   raw_status <- character(length(lines))
@@ -136,6 +141,7 @@ tasks <- function(file = NULL,
     depth     = raw_depth[idx],
     status    = unname(status_map[raw_status[idx]]),
     recurring = raw_recur[idx],
+    blocked   = .is_blocked(raw_text[idx]),
     text      = raw_text[idx],
     parent_id = parents,
     stringsAsFactors = FALSE

@@ -3,21 +3,27 @@
 \alias{tasks}
 \title{Read tasks as a structured data.frame}
 \usage{
-tasks(file = NULL, status = NULL, recurring = NULL, blocked = NULL,
-      cfg = todo_config())
+tasks(
+  file = NULL,
+  status = NULL,
+  recurring = NULL,
+  blocked = NULL,
+  cfg = todo_config()
+)
 }
 \arguments{
 \item{file}{Path to a single file, a character vector of paths, or `NULL`
-(default) to parse every `ToDo_*.txt` in `cfg$live_dir`.}
+(default) to parse `todo.md` (if present) and every
+`todo_<yymmdd>_<period>.md` in `cfg$live_dir`.}
 
 \item{status}{Optional filter. One or more of `"todo"`, `"in_progress"`,
-`"done"`, `"blocked"`.}
+`"done"`, `"important"`.}
 
 \item{recurring}{Optional logical filter. Keep only recurring (`TRUE`) or
 non-recurring (`FALSE`) tasks.}
 
-\item{blocked}{Optional logical filter. Convenience for
-`status = "blocked"`. Combines (intersects) with `status` if both given.}
+\item{blocked}{Optional logical filter on the `blocked` column (items
+tagged `#blocked`). Combines (intersects) with `status` if both given.}
 
 \item{cfg}{Config list from [todo_config()]. Used to resolve `live_dir`
 and `indent` when `file = NULL`.}
@@ -29,8 +35,9 @@ A `data.frame` with columns:
   \item{file}{character, source file basename (not full path)}
   \item{line}{integer, 1-indexed line number in the source file}
   \item{depth}{integer, 0 = root, +1 per indent level}
-  \item{status}{character, one of `"todo"`, `"in_progress"`, `"done"`, `"blocked"`}
+  \item{status}{character, one of `"todo"`, `"in_progress"`, `"done"`, `"important"`}
   \item{recurring}{logical, `TRUE` if the task has the `*` prefix}
+  \item{blocked}{logical, `TRUE` if the text carries a `#blocked` tag}
   \item{text}{character, task text with status brackets and `-`/`*` prefixes stripped}
   \item{parent_id}{character, `id` of nearest ancestor with lower depth, or `NA` for root tasks}
 }

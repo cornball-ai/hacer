@@ -3,8 +3,11 @@
 \alias{sync_from_daily}
 \title{Sync new items added in Daily up to Week/Month/Quarter}
 \usage{
-sync_from_daily(date = Sys.Date(), cfg = todo_config(),
-                preview = .preview_default())
+sync_from_daily(
+  date = Sys.Date(),
+  cfg = todo_config(),
+  preview = .preview_default()
+)
 }
 \arguments{
 \item{date}{A Date. Defaults to `Sys.Date()`.}
