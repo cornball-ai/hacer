@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly todo snapshot at 02:00
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+RandomizedDelaySec=60
+Unit=hacer-snapshot.service
+
+[Install]
+WantedBy=timers.target
