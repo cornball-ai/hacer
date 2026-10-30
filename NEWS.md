@@ -1,3 +1,14 @@
+# hacer 0.2.2.3
+
+- `survey()` reads note contents: one row per open task-list item in any
+  `.md` under the tasks dir, ranked like todo items (`[!]` and `#blocked`
+  1, `[/]` 2, an open item 2 in a note changed within the window and 3
+  in an older one). Fenced code blocks are skipped. Git `commits` rows
+  list up to three recent subjects.
+- New `survey_report()` renders a survey as markdown, one section per
+  project, most urgent first, matching project names across sources
+  ignoring case, spaces and punctuation.
+
 # hacer 0.2.2.2
 
 - `[!]` now means important, not blocked. `rollup_status()` no longer bubbles
