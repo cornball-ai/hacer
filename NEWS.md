@@ -1,3 +1,10 @@
+# hacer 0.2.2.4
+
+- `survey()` treats a top-level todo item as the project and the items
+  under it as its tasks: the parent is no longer a row of its own unless
+  it has no open children or carries `[!]` / `#blocked`, and `detail` is
+  the task's path below the project.
+
 # hacer 0.2.2.3
 
 - `survey()` reads note contents: one row per open task-list item in any
