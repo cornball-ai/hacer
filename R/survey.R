@@ -19,9 +19,16 @@
 #'     history are skipped.}
 #'   \item{github}{Open pull requests in the `owners`' repositories, via
 #'     the `gh` CLI. Priority 2.}
-#'   \item{tasks}{Markdown files under `tasks_dir` modified in the window,
-#'     such as agent handoffs. Priority 2.}
+#'   \item{tasks}{Notes under `tasks_dir`. A `.md` file modified in the
+#'     window gives a `changed` row at 2. Every open task-list item in
+#'     any note (fenced code skipped) gives a row ranked like a todo
+#'     item: `[!]` and `#blocked` are 1, `[/]` is 2, an open `[ ]` is 2
+#'     in a note changed within the window and 3 in an older one. The
+#'     project is the note's first folder under `tasks_dir`.}
 #' }
+#'
+#' [survey_report()] renders the result as markdown, one section per
+#' project.
 #'
 #' @param cfg A config list from `todo_config()`.
 #' @param todo Path to the todo file. Defaults to [todo_file()]. Skipped
@@ -55,7 +62,7 @@ survey <- function(cfg = todo_config(), todo = todo_file(cfg),
     .survey_todo(todo, indent),
     .survey_git(repos, root, owners, days),
     if (github) .survey_github(owners) else NULL,
-    .survey_tasks(tasks_dir, days)
+    .survey_tasks(tasks_dir, days, indent)
   )
   out <- do.call(rbind, rows)
   src_rank <- match(out$source, c("todo", "git", "github", "tasks"))
@@ -88,15 +95,23 @@ survey <- function(cfg = todo_config(), todo = todo_file(cfg),
   df <- parse_todo(todo, indent = indent)
   df <- df[df$status != "x", , drop = FALSE]
   if (!nrow(df)) return(NULL)
-  blocked <- .is_blocked(df$name)
-  priority <- ifelse(df$status == "!" | blocked, 1L,
-                     ifelse(df$status == "/", 2L, 3L))
-  signal <- ifelse(blocked, "blocked",
-                   ifelse(df$status == "!", "important",
-                          ifelse(df$status == "/", "in_progress", "todo")))
+  rank <- .rank_items(df$status, df$name)
   project <- vapply(strsplit(df$path, " > ", fixed = TRUE), `[[`, "", 1L)
-  .survey_rows(priority, "todo", project, signal, df$path, todo,
+  .survey_rows(rank$priority, "todo", project, rank$signal, df$path, todo,
                rep(file.mtime(todo), nrow(df)))
+}
+
+# Priority and signal for open items. `[!]` and `#blocked` are 1, `[/]`
+# is 2, and a plain open item takes `open_priority`.
+.rank_items <- function(status, name, open_priority = 3L) {
+  blocked <- .is_blocked(name)
+  list(
+    priority = ifelse(status == "!" | blocked, 1L,
+                      ifelse(status == "/", 2L, as.integer(open_priority))),
+    signal = ifelse(blocked, "blocked",
+                    ifelse(status == "!", "important",
+                           ifelse(status == "/", "in_progress", "todo")))
+  )
 }
 
 .survey_git <- function(repos, root, owners, days) {
@@ -138,10 +153,11 @@ survey <- function(cfg = todo_config(), todo = todo_file(cfg),
                    "--format=%s")
   n_commits <- if (.git_failed(subjects)) 0L else length(subjects)
   if (n_commits) {
+    latest <- paste(subjects[seq_len(min(3L, n_commits))], collapse = " | ")
     rows[[length(rows) + 1L]] <- .survey_rows(
       2L, "git", name, "commits",
       sprintf("%d commit%s in %d days, latest: %s", n_commits,
-              if (n_commits == 1L) "" else "s", as.integer(days), subjects[1]),
+              if (n_commits == 1L) "" else "s", as.integer(days), latest),
       repo, last_ct)
   }
 
@@ -215,7 +231,7 @@ survey <- function(cfg = todo_config(), todo = todo_file(cfg),
                sprintf("https://github.com/%s/pull/%s", full, num), updated)
 }
 
-.survey_tasks <- function(tasks_dir, days) {
+.survey_tasks <- function(tasks_dir, days, indent = 2L) {
   if (is.null(tasks_dir)) return(NULL)
   tasks_dir <- path.expand(tasks_dir)
   if (!dir.exists(tasks_dir)) return(NULL)
@@ -224,13 +240,45 @@ survey <- function(cfg = todo_config(), todo = todo_file(cfg),
   if (!length(files)) return(NULL)
   mtime <- file.mtime(files)
   recent <- mtime >= Sys.time() - as.numeric(days) * 86400
-  if (!any(recent)) return(NULL)
-  files <- files[recent]
-  mtime <- mtime[recent]
   rel <- substring(files, nchar(tasks_dir) + 2L)
   project <- ifelse(grepl("/", rel, fixed = TRUE),
                     sub("/.*$", "", rel), basename(tasks_dir))
-  .survey_rows(2L, "tasks", project, "changed",
-               sprintf("%s changed %s", rel, format(mtime, "%Y-%m-%d %H:%M")),
-               files, mtime)
+  changed <- if (any(recent)) {
+    .survey_rows(2L, "tasks", project[recent], "changed",
+                 sprintf("%s changed %s", rel[recent],
+                         format(mtime[recent], "%Y-%m-%d %H:%M")),
+                 files[recent], mtime[recent])
+  }
+  items <- Map(.survey_note_items, files, project, recent, as.numeric(mtime),
+               MoreArgs = list(indent = indent))
+  rows <- do.call(rbind, c(list(changed), unname(items)))
+  if (is.null(rows) || !nrow(rows)) return(NULL)
+  rows
+}
+
+# One row per open task-list item in a note. An open [ ] is in flight
+# when the note changed within the window, on the list otherwise.
+.survey_note_items <- function(file, project, recent, mtime, indent = 2L) {
+  items <- .task_items(readLines(file, warn = FALSE), indent)
+  items <- items[items$status != "x", , drop = FALSE]
+  if (!nrow(items)) return(NULL)
+  rank <- .rank_items(items$status, items$name,
+                      open_priority = if (recent) 2L else 3L)
+  .survey_rows(rank$priority, "tasks", project, rank$signal, items$name,
+               file, rep(.POSIXct(mtime), nrow(items)))
+}
+
+# Task-list lines outside fenced code blocks, as status and name. Notes
+# have no recurring marker, so a leading `*` is markdown emphasis.
+.task_items <- function(lines, indent = 2L) {
+  fenced <- cumsum(grepl("^\\s*(```|~~~)", lines)) %% 2L == 1L
+  status <- character()
+  name <- character()
+  for (ln in lines[!fenced]) {
+    p <- .parse_task_line(ln, indent, recur_marker = FALSE)
+    if (is.null(p)) next
+    status <- c(status, p$status)
+    name <- c(name, p$name)
+  }
+  data.frame(status = status, name = name, stringsAsFactors = FALSE)
 }

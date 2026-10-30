@@ -62,8 +62,15 @@ A dirty worktree on a dormant repo is 3. Repos without a commit
 history are skipped.}
 \item{github}{Open pull requests in the `owners`' repositories, via
 the `gh` CLI. Priority 2.}
-\item{tasks}{Markdown files under `tasks_dir` modified in the window,
-such as agent handoffs. Priority 2.}
+\item{tasks}{Notes under `tasks_dir`. A `.md` file modified in the
+window gives a `changed` row at 2. Every open task-list item in
+any note (fenced code skipped) gives a row ranked like a todo
+item: `[!]` and `#blocked` are 1, `[/]` is 2, an open `[ ]` is 2
+in a note changed within the window and 3 in an older one. The
+project is the note's first folder under `tasks_dir`.}
 }
+
+[survey_report()] renders the result as markdown, one section per
+project.
 
 }

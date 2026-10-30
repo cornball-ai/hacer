@@ -6,7 +6,7 @@
 #   - legacy:   "[X] - text" or "[X] -*text"
 # The `*` recurring marker is parsed in either format for backwards compat,
 # even though the markdown writer no longer emits it.
-.parse_task_line <- function(ln, indent = 2L) {
+.parse_task_line <- function(ln, indent = 2L, recur_marker = TRUE) {
   stripped <- sub("^\\s+", "", ln)
   nspaces <- nchar(ln) - nchar(stripped)
   level <- as.integer(nspaces / indent)
@@ -28,7 +28,7 @@
   }
 
   recur <- FALSE
-  if (grepl("^\\*", rest)) {
+  if (recur_marker && grepl("^\\*", rest)) {
     recur <- TRUE
     rest <- sub("^\\*", "", rest)
   }
