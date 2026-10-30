@@ -52,8 +52,12 @@ attention now, 2 is in flight, 3 is on the list but idle.
 }
 \details{
 \describe{
-\item{todo}{Open items in the live todo file. `[!]` and `#blocked`
-are 1, `[/]` is 2, `[ ]` is 3. Done items are skipped.}
+\item{todo}{Open items in the live todo file. A top-level item names
+the project and its descendants are the tasks, so a top-level item
+with open children is not itself a row unless it carries `[!]` or
+`#blocked`; one with no open children is its own task. `detail` is
+the task's path below the project. `[!]` and `#blocked` are 1,
+`[/]` is 2, `[ ]` is 3. Done items are skipped.}
 \item{git}{Repos directly under `root` (or the given `repos`) whose
 `origin` belongs to one of `owners`. A dirty worktree on an active
 repo (commits in the window, or a commit in the last 14 days) is 1.

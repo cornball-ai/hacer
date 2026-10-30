@@ -16,7 +16,9 @@ writeLines(c(
   "  - [x] alpha done",
   "- [!] Beta",
   "- [ ] Gamma #blocked on review",
-  "- [x] Delta"
+  "- [x] Delta",
+  "- [!] Epsilon",
+  "  - [ ] eps step"
 ), hacer::todo_file(cfg))
 
 tasks_dir <- file.path(root, "tasks")
@@ -52,19 +54,26 @@ expect_inherits(s1$updated, "POSIXct")
 expect_true(all(diff(s1$priority) >= 0), info = "sorted by priority")
 
 todo1 <- s1[s1$source == "todo", ]
-expect_equal(nrow(todo1), 4L, info = "done items are skipped")
+expect_equal(nrow(todo1), 5L,
+             info = "done items skipped; a topic with open tasks is not a task")
+expect_false("Alpha" %in% todo1$detail,
+             info = "the top-level item is the project, not a task")
 expect_equal(todo1$signal[todo1$detail == "Beta"], "important")
 expect_equal(todo1$priority[todo1$detail == "Beta"], 1L,
              info = "[!] ranks P1")
+expect_equal(todo1$project[todo1$detail == "Beta"], "Beta",
+             info = "a top-level item with no children is its own task")
 expect_equal(todo1$signal[grepl("Gamma", todo1$detail)], "blocked")
 expect_equal(todo1$priority[grepl("Gamma", todo1$detail)], 1L,
              info = "#blocked ranks P1")
-expect_equal(todo1$priority[todo1$detail == "Alpha > alpha step"], 2L,
+expect_equal(todo1$priority[todo1$detail == "alpha step"], 2L,
              info = "[/] ranks P2")
-expect_equal(todo1$project[todo1$detail == "Alpha > alpha step"], "Alpha",
-             info = "project is the top-level ancestor")
-expect_equal(todo1$priority[todo1$detail == "Alpha"], 3L,
+expect_equal(todo1$project[todo1$detail == "alpha step"], "Alpha",
+             info = "project is the top-level ancestor; detail is the path below it")
+expect_equal(todo1$priority[todo1$detail == "eps step"], 3L,
              info = "open [ ] ranks P3")
+expect_equal(todo1$signal[todo1$detail == "Epsilon"], "important",
+             info = "an important topic keeps its own row beside its tasks")
 expect_equal(unique(todo1$path), hacer::todo_file(cfg))
 
 tk1 <- s1[s1$source == "tasks", ]
@@ -114,8 +123,10 @@ expect_true(any(rep1 == "## proj (attention)"),
 expect_true(any(rep1 == "## Alpha (in flight)"))
 expect_true(any(rep1 == "- [!] urgent thing (proj/handoff.md)"),
             info = "note items carry their marker and note")
-expect_true(any(rep1 == "- [/] Alpha > alpha step"),
-            info = "todo items carry their marker and path")
+expect_true(any(rep1 == "- [/] alpha step"),
+            info = "todo tasks carry their marker and path below the topic")
+expect_false(any(rep1 == "- [ ] Alpha"),
+             info = "the topic names the section and is not repeated as a task")
 expect_true(any(grepl("^- note: proj/handoff.md changed ", rep1)))
 expect_true(which(rep1 == "## proj (attention)") <
               which(rep1 == "## Alpha (in flight)"),

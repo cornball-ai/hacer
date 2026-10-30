@@ -9,8 +9,12 @@
 #' attention now, 2 is in flight, 3 is on the list but idle.
 #'
 #' \describe{
-#'   \item{todo}{Open items in the live todo file. `[!]` and `#blocked`
-#'     are 1, `[/]` is 2, `[ ]` is 3. Done items are skipped.}
+#'   \item{todo}{Open items in the live todo file. A top-level item names
+#'     the project and its descendants are the tasks, so a top-level item
+#'     with open children is not itself a row unless it carries `[!]` or
+#'     `#blocked`; one with no open children is its own task. `detail` is
+#'     the task's path below the project. `[!]` and `#blocked` are 1,
+#'     `[/]` is 2, `[ ]` is 3. Done items are skipped.}
 #'   \item{git}{Repos directly under `root` (or the given `repos`) whose
 #'     `origin` belongs to one of `owners`. A dirty worktree on an active
 #'     repo (commits in the window, or a commit in the last 14 days) is 1.
@@ -90,14 +94,25 @@ survey <- function(cfg = todo_config(), todo = todo_file(cfg),
              path = path, updated = updated, stringsAsFactors = FALSE)
 }
 
+# A top-level item is the project and its descendants are the tasks. A
+# parent with open children is not listed itself unless it carries a marker
+# of its own (`[!]` or `#blocked`); a top-level item with no open children
+# is its own task. `detail` is the task path below the project.
 .survey_todo <- function(todo, indent = 2L) {
   if (is.null(todo) || !file.exists(todo)) return(NULL)
   df <- parse_todo(todo, indent = indent)
   df <- df[df$status != "x", , drop = FALSE]
   if (!nrow(df)) return(NULL)
+  has_open_child <- df$id %in% df$parent_id
+  marked <- df$status == "!" | .is_blocked(df$name)
+  df <- df[df$level > 0L | !has_open_child | marked, , drop = FALSE]
+  if (!nrow(df)) return(NULL)
   rank <- .rank_items(df$status, df$name)
-  project <- vapply(strsplit(df$path, " > ", fixed = TRUE), `[[`, "", 1L)
-  .survey_rows(rank$priority, "todo", project, rank$signal, df$path, todo,
+  parts <- strsplit(df$path, " > ", fixed = TRUE)
+  project <- vapply(parts, `[[`, "", 1L)
+  detail <- vapply(parts, function(p) paste(p[-1L], collapse = " > "), "")
+  detail[df$level == 0L] <- df$name[df$level == 0L]
+  .survey_rows(rank$priority, "todo", project, rank$signal, detail, todo,
                rep(file.mtime(todo), nrow(df)))
 }
 
